@@ -16,12 +16,9 @@
 - https://github.com/iced-rs/iced/tree/master/examples/todos
 
 
-todo:
-
-faire une struct State
-
-faire une enum Notes, avec les differents etat de l'application
 
 
-faire une enum Message pour chaque fonctionnalité de l'application
 
+
+
+`sudo dnf install freetype-devel expat-devel fontconfig-devel rust-gdk-sys+default-devel`
