@@ -2,8 +2,11 @@
 name = "notes_rs"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+rust-version = "1.65.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 iced = "0.9"
+color-eyre = "0.6.2"
