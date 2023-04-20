@@ -3,7 +3,8 @@
 use iced::executor;
 use iced::{Application, Command, Element, Theme};
 
-use iced::widget::{text};
+use iced::widget::{text, column};
+
 
 
 
@@ -55,7 +56,13 @@ impl Application for Notes {
    
     fn view(&self) -> Element<Message> {
 
-        text("hello").into()
+        let mut my_vector: Vec<Element<'_, _, _>> = Vec::new();
+
+        my_vector.push(text("yo").into());
+
+        my_vector.push(crate::actions::Actions::view().into());
+
+        column(my_vector).into()
         
 
     }
