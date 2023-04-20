@@ -1,5 +1,5 @@
 [package]
-name = "drop_down_note"
+name = "notes_rs"
 version = "0.1.0"
 edition = "2021"
 

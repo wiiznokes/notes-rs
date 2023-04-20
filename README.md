@@ -26,8 +26,3 @@ faire une enum Notes, avec les differents etat de l'application
 
 faire une enum Message pour chaque fonctionnalité de l'application
 
-Pour chaque fonctionnalité:
-
-- fn new
-- fn update
-- fn view
