@@ -1,12 +1,17 @@
+use iced::Length;
 
 
-use iced::widget::{text, column, container, row, button};
+use crate::theme::widget::{Element, Column, Row, Text};
 
-use iced::{Element, Alignment, Rectangle, Length, Padding};
+use crate::app::{self};
 
-use iced::widget::{Row, Column, Text, Space};
+use crate::theme:: {self};
 
-use iced::theme::{self, Theme};
+use iced::widget::{Space};
+
+
+
+
 
 #[derive(Clone, Debug, Copy)]
 pub struct Onglets {
@@ -35,10 +40,10 @@ impl Onglets {
 
    
 
-    pub fn view(&self) -> Element<crate::app::Message> {
+    pub fn view(&self) -> Element<app::Message, iced::Renderer<theme::Theme>> {
 
 
-        text("hello").into()
+        Text::new("hello").into()
        
         
     }

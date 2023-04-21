@@ -11,7 +11,7 @@ use crate::dirs_tree::{DirsTree};
 
 use crate::onglets::{Onglets};
 
-use crate::theme::{Theme};
+use crate::theme::{self};
 
 use crate::theme::widget::{Element, Column, Row};
 
@@ -48,7 +48,7 @@ impl Application for Notes {
     type Executor = executor::Default;
     type Flags = ();
     type Message = Message;
-    type Theme = Theme;
+    type Theme = theme::Theme;
 
     
   
@@ -87,7 +87,7 @@ impl Application for Notes {
     }
 
    
-    fn view(&self) -> Element<Message> {
+    fn view(&self) -> Element<Message, iced::Renderer<theme::Theme>> {
 
 
         

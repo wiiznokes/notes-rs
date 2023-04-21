@@ -1,7 +1,7 @@
 
 use iced::{application, color};
 
-use iced::widget::{button}; 
+use iced::widget::{button, text}; 
 
 
 
@@ -45,6 +45,20 @@ impl button::StyleSheet for Theme {
     }
 }
 
+
+impl text::StyleSheet for Theme {
+    type Style = ();
+
+    
+    fn appearance(&self, style: Self::Style) -> text::Appearance {
+        
+        text::Appearance {
+            color: color![0x45, 0x85, 0x88].into()
+            
+        }
+    }
+}
+
 // Always import widget types from this module since it
 // uses our custom theme instead of the built-in iced::Theme.
 // Otherwise you will get compilation errors since iced::Element
@@ -54,10 +68,11 @@ pub mod widget {
     use crate::theme::Theme;
 
     pub type Renderer = iced::Renderer<Theme>;
-    pub type Element<'a, Message> = iced::Element<'a, Message, Renderer>;
+    pub type Element<'a, Message, Renderer> = iced::Element<'a, Message, Renderer>;
     pub type Container<'a, Message> = iced::widget::Container<'a, Message, Renderer>;
-    pub type Button<'a, Message> = iced::widget::Button<'a, Message, Renderer>;
+    pub type Button<'a, Message, Renderer> = iced::widget::Button<'a, Message, Renderer>;
     pub type Column<'a, Message> = iced::widget::Column<'a, Message, Renderer>;
     pub type Row<'a, Message> = iced::widget::Row<'a, Message, Renderer>;
+    pub type Text<'a, Message> = iced::widget::Text<'a, Message>;
 
 }
