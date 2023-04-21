@@ -1,6 +1,5 @@
-
-
-
+#![allow(dead_code)]
+#![allow(unused_variables)]
 
 
 
@@ -19,7 +18,7 @@ impl application::StyleSheet for Theme {
 
     type Style = ();
 
-    fn appearance(&self, style: &Self::Style) -> application::Appearance {
+    fn appearance(&self, _style: &Self::Style) -> application::Appearance {
         let colors = Colors::new();
         application::Appearance {
             background_color: colors.dark_grey,
@@ -36,7 +35,7 @@ impl button::StyleSheet for Theme {
 
     
 
-    fn active(&self, style: &Self::Style) -> button::Appearance {
+    fn active(&self, _style: &Self::Style) -> button::Appearance {
         let colors = Colors::new();
         button::Appearance {
             background: colors.light_grey.into(),
@@ -53,7 +52,7 @@ impl text::StyleSheet for Theme {
     type Style = ();
 
     
-    fn appearance(&self, style: Self::Style) -> text::Appearance {
+    fn appearance(&self, _style: Self::Style) -> text::Appearance {
         let colors = Colors::new();
         text::Appearance {
             color: colors.green.into()
