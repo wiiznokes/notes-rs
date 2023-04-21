@@ -1,5 +1,5 @@
 
-
+use iced::{Command};
 
 use iced::Length;
 
@@ -21,7 +21,7 @@ pub struct Actions {
 
 #[derive(Clone, Debug)]
 pub enum Message {
-    Toggle(bool),
+    Toggle,
     Settings,
     Push,
     Fetch,
@@ -40,11 +40,36 @@ impl Actions {
 
     }
 
+    pub fn update(&mut self, message: Message) -> iced::Command<app::Message> {
+
+        match message {
+            Message::Toggle => {
+
+                println!("hella!");
+
+                Command::none()
+            },
+            _ => Command::none()
+        }
+    }
+
+
 
     pub fn view(&self) -> Element<app::Message, iced::Renderer<theme::Theme>> {
 
+
+        let left_actions = Row::new()
+            .push(
+                Button::new(Text::new("Toggle"))
+                    .on_press(app::Message::Actions(Message::Toggle)))
+            .push(Button::new("Settings"))
+            .spacing(10)
+            .width(Length::Fill);
+
+
         Row::new()
             .push(Space::new(5, 0))
+            .push(left_actions)
             .push(
                 Row::new()
                     .push(Button::new(Text::new("Toggle")))

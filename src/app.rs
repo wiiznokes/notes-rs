@@ -5,14 +5,11 @@ use iced::{Application, Command};
 
 
 
-use crate::actions::{Actions};
-
-use crate::dirs_tree::{DirsTree};
-
-use crate::onglets::{Onglets};
+use crate::actions::{self, Actions};
+use crate::dirs_tree::{self, DirsTree};
+use crate::onglets::{self, Onglets};
 
 use crate::theme::{self};
-
 use crate::theme::widget::{Element, Column, Row};
 
 
@@ -27,14 +24,16 @@ pub struct Notes {
     pub dirs_tree: DirsTree,
 
     pub onglets: Onglets,
+
+    pub test: i32,
 }
 
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    Actions,
-    DirsTree,
-    Onglets
+    Actions(actions::Message),
+    DirsTree(dirs_tree::Message),
+    Onglets(onglets::Message),
 }
 
 
@@ -59,7 +58,7 @@ impl Application for Notes {
             actions: Actions::new(),
             dirs_tree: DirsTree::new(),
             onglets: Onglets::new(),
-
+            test: 0
         };
 
 
@@ -77,13 +76,11 @@ impl Application for Notes {
 
     fn update(&mut self, message: Message) -> iced::Command<Self::Message> {
 
-        let mut ret = Command::none();
         match message {
-            Message::Actions => {},
-            Message::DirsTree => {},
-            Message::Onglets => {}
+            Message::Actions(sub_message) => self.actions.update(sub_message),
+            Message::DirsTree(sub_message) => self.dirs_tree.update(sub_message),
+            Message::Onglets(sub_message) => self.onglets.update(sub_message),
         }
-        ret
     }
 
    

@@ -1,5 +1,5 @@
 use iced::Length;
-
+use iced::{Command};
 
 use crate::theme::widget::{Element, Column, Row, Text, Container};
 
@@ -38,6 +38,15 @@ impl Onglets {
 
     }
 
+
+    pub fn update(&mut self, message: Message) -> iced::Command<app::Message> {
+
+        let mut ret = Command::none();
+        match message {
+            _ => {}
+        }
+        ret
+    }
 
    
 
