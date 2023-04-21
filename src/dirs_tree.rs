@@ -3,7 +3,7 @@
 use iced::Length;
 
 
-use crate::theme::widget::{Element, Column, Row, Text};
+use crate::theme::widget::{Element, Column, Row, Text, Container};
 
 use crate::app::{self};
 
@@ -49,8 +49,9 @@ impl DirsTree {
 
     pub fn view(&self) -> Element<app::Message, iced::Renderer<theme::Theme>> {
 
+        
 
-        Column::new()
+        let content: Column<app::Message, iced::Renderer<theme::Theme>> = Column::new()
             .padding(10)
             .push(Text::new("v D projet1"))
             .push(Text::new("    F main.rs"))
@@ -59,9 +60,8 @@ impl DirsTree {
             .push(Text::new("        F test.c"))
             .push(Text::new("        > D privateProject"))
             .push(Text::new("F file.md"))
-            .push(Text::new("F file.txt"))
-            .into()
+            .push(Text::new("F file.txt")).into();
        
-        
+       content.into()
     }
 }

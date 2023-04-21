@@ -89,7 +89,7 @@ impl Application for Notes {
    
     fn view(&self) -> Element<Message, iced::Renderer<theme::Theme>> {
 
-
+        
         
         Column::new()
             .push(Space::new(0, 5))
