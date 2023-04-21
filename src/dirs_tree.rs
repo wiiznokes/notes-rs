@@ -1,12 +1,19 @@
 
 
-use iced::widget::{text, column, container, row, button};
 
-use iced::{Element, Alignment, Rectangle, Length, Padding};
+use iced::{Length};
 
-use iced::widget::{Row, Column, Text, Space};
+use iced;
 
-use iced::theme::{self, Theme};
+
+use crate::theme::widget::{Element, Column, Row, Text, Container};
+
+use crate::app::{self};
+
+use crate::theme:: {self};
+
+use iced::widget::{Space};
+
 
 #[derive(Clone, Debug, Copy)]
 pub struct DirsTree {
@@ -43,21 +50,30 @@ impl DirsTree {
 
    
 
-    pub fn view(&self) -> Element<crate::app::Message> {
+    pub fn view(&self) -> Element<app::Message, iced::Renderer<theme::Theme>> {
 
+        
 
-        Column::new()
+        let tree: Column<app::Message, iced::Renderer<theme::Theme>> = Column::new()
             .padding(10)
-            .push(text("v D projet1"))
-            .push(text("    F main.rs"))
-            .push(text("v D projet2"))
-            .push(text("    v D src"))
-            .push(text("        F test.c"))
-            .push(text("        > D privateProject"))
-            .push(text("F file.md"))
-            .push(text("F file.txt"))
-            .into()
+            .push(Text::new("v D projet1"))
+            .push(Text::new("    F main.rs"))
+            .push(Text::new("v D projet2"))
+            .push(Text::new("    v D src"))
+            .push(Text::new("        F test.c"))
+            .push(Text::new("        > D privateProject"))
+            .push(Text::new("F file.md"))
+            .push(Text::new("F file.txt")).into();
+        
+        
        
+        let content = Container::new(tree)
+            .height(Length::Fill)
+            .style(theme::Container::Bordered);
+
+        Container::new(content)
+            .height(Length::Fill)
+            .padding(10).into()
         
     }
 }

@@ -1,12 +1,16 @@
 
 
-use iced::widget::{text, column, container, row, button};
 
-use iced::{Element, Alignment, Rectangle, Length};
+use iced::Length;
 
-use iced::widget::{Row, Column, Text, Space};
 
-use iced::theme::{self, Theme};
+use crate::theme::widget::{Element, Button, Row, Text};
+
+use crate::app::{self};
+
+use crate::theme:: {self};
+
+use iced::widget::{Space};
 
 #[derive(Clone, Debug, Copy)]
 pub struct Actions {
@@ -37,33 +41,30 @@ impl Actions {
     }
 
 
-    pub fn view(&self) -> Element<crate::app::Message> {
+    pub fn view(&self) -> Element<app::Message, iced::Renderer<theme::Theme>> {
 
-        row![
+        Row::new()
+            .push(Space::new(5, 0))
+            .push(
+                Row::new()
+                    .push(Button::new(Text::new("Toggle")))
+                    .push(Button::new("Settings"))
+                    .spacing(10)
+                    .width(Length::Fill),
+            )
+            .push(
+                Row::new()
+                    .push(Button::new("Push"))
+                    .push(Button::new("Fetch"))
+                    .push(Button::new("Edit"))
+                    .spacing(10)
+                    .width(Length::Shrink),
+            )
+            .push(Space::new(5, 0))
+            .into()
+  
 
-            Space::new(5, 0),
-
-            row![
-                button("Toggle"),
-                button("Settings"),
-            ]
-            .spacing(10)
-            .width(Length::Fill),
-
-            row![
-                button("Push"),
-                button("Fetch"),
-                button("Edit"),
-            ]
-            .spacing(10)
-            .width(Length::Shrink),
-
-            Space::new(5, 0),
-
-        ]
-        .into()
-
-   
+        
 
         
        

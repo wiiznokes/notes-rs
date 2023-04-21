@@ -1,15 +1,23 @@
 
 
-use iced::executor;
-use iced::{Application, Command, Element, Theme};
+use iced::{executor};
+use iced::{Application, Command};
 
-use iced::widget::{text, column, Column, Space, row};
+
 
 use crate::actions::{Actions};
 
 use crate::dirs_tree::{DirsTree};
 
 use crate::onglets::{Onglets};
+
+use crate::theme::{self};
+
+use crate::theme::widget::{Element, Column, Row};
+
+
+use iced::widget::{Space};
+
 
 
 pub struct Notes {
@@ -30,11 +38,20 @@ pub enum Message {
 }
 
 
+
+
+
+
+
+
 impl Application for Notes {
     type Executor = executor::Default;
     type Flags = ();
     type Message = Message;
-    type Theme = Theme;
+    type Theme = theme::Theme;
+
+    
+  
 
     fn new(_flags: ()) -> (Self, Command<Self::Message>) {
 
@@ -70,25 +87,22 @@ impl Application for Notes {
     }
 
    
-    fn view(&self) -> Element<Message> {
-
+    fn view(&self) -> Element<Message, iced::Renderer<theme::Theme>> {
 
         
+        
+        Column::new()
+            .push(Space::new(0, 5))
+            .push(self.actions.view())
+            .push(
+                Row::new()
+                    .push(self.dirs_tree.view())
+                    .push(self.onglets.view())
+            )
+            .into()
 
 
-        column![
-            Space::new(0, 5),
-
-            self.actions.view(),
-
-            row![
-                self.dirs_tree.view(),
-                self.onglets.view(),
-            ]
-
-        ]
-        .into()
-
+    
         
     
 
