@@ -3,19 +3,30 @@
 use iced::executor;
 use iced::{Application, Command, Element, Theme};
 
-use iced::widget::{text, column, Column, Space};
+use iced::widget::{text, column, Column, Space, row};
 
 use crate::actions::{Actions};
 
+use crate::dirs_tree::{DirsTree};
+
+use crate::onglets::{Onglets};
+
 
 pub struct Notes {
-    pub actions: Actions
+    pub actions: Actions,
+
+
+    pub dirs_tree: DirsTree,
+
+    pub onglets: Onglets,
 }
 
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    Actions
+    Actions,
+    DirsTree,
+    Onglets
 }
 
 
@@ -28,7 +39,10 @@ impl Application for Notes {
     fn new(_flags: ()) -> (Self, Command<Self::Message>) {
 
         let mut app = Notes {
-            actions: Actions {  }
+            actions: Actions::new(),
+            dirs_tree: DirsTree::new(),
+            onglets: Onglets::new(),
+
         };
 
 
@@ -48,7 +62,9 @@ impl Application for Notes {
 
         let mut ret = Command::none();
         match message {
-            Message::Actions => {}
+            Message::Actions => {},
+            Message::DirsTree => {},
+            Message::Onglets => {}
         }
         ret
     }
@@ -64,6 +80,11 @@ impl Application for Notes {
             Space::new(0, 5),
 
             self.actions.view(),
+
+            row![
+                self.dirs_tree.view(),
+                self.onglets.view(),
+            ]
 
         ]
         .into()
