@@ -1,18 +1,20 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
 
 
 use iced::{Command};
 use iced::{Length};
 
-use iced;
 
 
-use crate::theme::widget::{Element, Column, Row, Text, Container};
+
+use crate::theme::widget::{Element, Column, Text, Container};
 
 use crate::app::{self};
 
 use crate::theme:: {self};
 
-use iced::widget::{Space};
+
 
 
 #[derive(Clone, Debug, Copy)]
@@ -48,12 +50,10 @@ impl DirsTree {
     }
 
 
-    pub fn update(&mut self, message: Message) -> iced::Command<app::Message> {
+    pub fn update(&mut self, _message: Message) -> iced::Command<app::Message> {
 
-        let mut ret = Command::none();
-        match message {
-            _ => {}
-        }
+        let ret = Command::none();
+        {}
         ret
     }
 
@@ -72,7 +72,7 @@ impl DirsTree {
             .push(Text::new("        F test.c"))
             .push(Text::new("        > D privateProject"))
             .push(Text::new("F file.md"))
-            .push(Text::new("F file.txt")).into();
+            .push(Text::new("F file.txt"));
         
         
        

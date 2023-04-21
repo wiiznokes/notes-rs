@@ -1,13 +1,17 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
+
 use iced::Length;
 use iced::{Command};
 
-use crate::theme::widget::{Element, Column, Row, Text, Container};
+use crate::theme::widget::{Element, Text, Container};
 
 use crate::app::{self};
 
 use crate::theme:: {self};
 
-use iced::widget::{Space};
+
 
 use iced::alignment;
 
@@ -39,12 +43,10 @@ impl Onglets {
     }
 
 
-    pub fn update(&mut self, message: Message) -> iced::Command<app::Message> {
+    pub fn update(&mut self, _message: Message) -> iced::Command<app::Message> {
 
-        let mut ret = Command::none();
-        match message {
-            _ => {}
-        }
+        let ret = Command::none();
+        {}
         ret
     }
 

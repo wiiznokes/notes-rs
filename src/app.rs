@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
 
 
 use iced::{executor};
@@ -54,7 +56,7 @@ impl Application for Notes {
 
     fn new(_flags: ()) -> (Self, Command<Self::Message>) {
 
-        let mut app = Notes {
+        let app = Notes {
             actions: Actions::new(),
             dirs_tree: DirsTree::new(),
             onglets: Onglets::new(),
@@ -62,7 +64,7 @@ impl Application for Notes {
         };
 
 
-        let mut command = Command::none();
+        let command = Command::none();
 
       
 
