@@ -3,13 +3,13 @@
 use iced::executor;
 use iced::{Application, Command, Element, Theme};
 
-use iced::widget::{text, column};
+use iced::widget::{text, column, Column};
 
-
+use crate::actions::{Actions};
 
 
 pub struct Notes {
-
+    pub actions: Actions
 }
 
 
@@ -28,7 +28,7 @@ impl Application for Notes {
     fn new(_flags: ()) -> (Self, Command<Self::Message>) {
 
         let mut app = Notes {
-
+            actions: Actions {  }
         };
 
 
@@ -56,14 +56,16 @@ impl Application for Notes {
    
     fn view(&self) -> Element<Message> {
 
-        let mut my_vector: Vec<Element<'_, _, _>> = Vec::new();
 
-        my_vector.push(text("yo").into());
-
-        my_vector.push(crate::actions::Actions::view().into());
-
-        column(my_vector).into()
         
+
+        let child = self.actions.view_fn();
+        
+        Column::new()
+            .push(text("yo"))
+            .push(child)
+            .into()
+    
 
     }
 
