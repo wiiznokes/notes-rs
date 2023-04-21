@@ -44,3 +44,17 @@ column {
 
 (not necessary relevant, used for cosmic text editor)
 `sudo dnf install freetype-devel expat-devel fontconfig-devel rust-gdk-sys+default-devel`
+
+
+## fonctionnalité
+
+- tabs
+- modif
+- view .txt et .md
+- params
+- fetch
+- send
+- create files
+- create dirs
+- dirs and files navigation
+- select racine
