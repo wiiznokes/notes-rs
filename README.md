@@ -17,8 +17,30 @@
 
 
 
+## Steps
+
+- definir la stucture qui contient les fichier dans app.rs
+- reussir a afficher la structure principale du projet
+```
+column {
+    row {
+        actions
+    }
+    row {
+        files_view
+        onglets
+    }
+}
+```
+- envoyer un message a partir de app.rs
+- envoyer un message a partir d'action.rs
+- modifier le state de l'app a partir d'action.rs
+- implementer la structure de fichier
+- reflechir a comment update la view a chaque modification d'un fichier autre que par l'app
+- apprendre à gerer la concurency en Rust
 
 
+## Dependencies Fedora 
 
-
+(not necessary relevant, used for cosmic text editor)
 `sudo dnf install freetype-devel expat-devel fontconfig-devel rust-gdk-sys+default-devel`
