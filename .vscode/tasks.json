@@ -5,6 +5,9 @@
 			"type": "cargo",
 			"label": "build",
 			"command": "build",
+			"args": [
+				
+			],
 			"problemMatcher": [
 				"$rustc"
 			],

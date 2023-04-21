@@ -17,7 +17,7 @@ use crate::theme:: {self};
 
 
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug)]
 pub struct DirsTree {
 
 

@@ -20,11 +20,10 @@ use iced::widget::{Space};
 
 
 pub struct Notes {
+
+    
     pub actions: Actions,
-
-
     pub dirs_tree: DirsTree,
-
     pub onglets: Onglets,
 
     pub test: i32,
@@ -76,10 +75,23 @@ impl Application for Notes {
     }
 
 
-    fn update(&mut self, message: Message) -> iced::Command<Self::Message> {
+    fn update(&mut self, message: Message) -> Command<Self::Message> {
 
+        
         match message {
-            Message::Actions(sub_message) => self.actions.update(sub_message),
+            Message::Actions(sub_message) => {
+
+               
+
+                // call first function with mutable reference to actions
+                let command = self.actions.update(sub_message, &mut self.test);
+                
+                
+                // actions is no longer borrowed mutably at this point
+
+                Command::none()
+
+            },
             Message::DirsTree(sub_message) => self.dirs_tree.update(sub_message),
             Message::Onglets(sub_message) => self.onglets.update(sub_message),
         }
@@ -96,7 +108,7 @@ impl Application for Notes {
             .push(
                 Row::new()
                     .push(self.dirs_tree.view())
-                    .push(self.onglets.view())
+                    .push(self.onglets.view(&self))
             )
             .into()
 

@@ -18,7 +18,7 @@ use iced::alignment;
 
 
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug)]
 pub struct Onglets {
 
 
@@ -52,10 +52,10 @@ impl Onglets {
 
    
 
-    pub fn view(&self) -> Element<app::Message, iced::Renderer<theme::Theme>> {
+    pub fn view(&self, notes: &app::Notes) -> Element<app::Message, iced::Renderer<theme::Theme>> {
 
 
-        let onglets = Text::new("hello")
+        let onglets = Text::new(format!("{}", notes.test))
             .height(Length::Fill)
             .width(Length::Fill)
             .horizontal_alignment(alignment::Horizontal::Center)
