@@ -15,7 +15,11 @@
 - https://github.com/iced-rs/iced/tree/master/examples/pane_grid
 - https://github.com/iced-rs/iced/tree/master/examples/todos
 
+## example files explo
+- https://github.com/Kaiden42/PWDuck
 
+## search engine
+- https://github.com/tsoding/seroost
 
 ## Steps
 
