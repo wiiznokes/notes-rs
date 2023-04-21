@@ -3,7 +3,7 @@
 ## docs
 - https://doc.rust-lang.org/book/ch00-00-introduction.html
 - https://docs.rs/iced/latest/iced/
-
+- https://www.youtube.com/watch?v=TJTDTyNdJdY
 ## repo
 - https://github.com/iced-rs/iced
 - https://github.com/pop-os/cosmic-epoch
