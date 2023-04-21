@@ -18,7 +18,7 @@ use iced::widget::{Space};
 #[derive(Clone, Debug, Copy)]
 pub struct Actions {
 
-
+    tt: i32,
 }
 
 
@@ -39,16 +39,22 @@ impl Actions {
 
     pub fn new () -> Actions {
 
-        Actions {  }
+        Actions { tt: 0 }
 
     }
 
-    pub fn update(&mut self, message: Message) -> iced::Command<app::Message> {
+    pub fn update(&mut self, message: Message, notes: &mut app::Notes) -> iced::Command<app::Message> {
 
         match message {
             Message::Toggle => {
 
                 println!("hella!");
+
+                println!("{}", self.tt);
+                self.tt += 1;
+
+
+                notes.test += 1;
 
                 Command::none()
             },
