@@ -1,12 +1,12 @@
 
 
-use iced::widget::{text, column, container, row, button};
 
-use iced::{Element, Alignment, Rectangle, Length};
 
-use iced::widget::{Row, Column, Text, Space};
 
-use iced::theme::{self, Theme};
+
+use crate::theme::widget::{Element, Button, Row};
+
+use iced::widget::{Space};
 
 #[derive(Clone, Debug, Copy)]
 pub struct Actions {
@@ -39,6 +39,15 @@ impl Actions {
 
     pub fn view(&self) -> Element<crate::app::Message> {
 
+        Row::new()
+            .push(Space::new(5, 0))
+            .push(
+                Row::new()
+                    .push(Button::new("Toggle"))
+            )
+            .into()
+        
+        /* 
         row![
 
             Space::new(5, 0),
@@ -63,7 +72,7 @@ impl Actions {
         ]
         .into()
 
-   
+        */
 
         
        
