@@ -11,17 +11,6 @@
             "cwd": "${workspaceFolder}",
             "sourceLanguages": [
                 "rust"
-            ]
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Release",
-            "program": "${workspaceFolder}/target/release/notes_rs",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "sourceLanguages": [
-                "rust"
             ],
             "preLaunchTask": "build"
         }

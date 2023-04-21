@@ -18,7 +18,7 @@ use iced::alignment;
 
 
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug)]
 pub struct Onglets {
 
 

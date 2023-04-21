@@ -15,7 +15,7 @@ use crate::theme:: {self};
 
 use iced::widget::{Space};
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug)]
 pub struct Actions {
 
     tt: i32,
@@ -43,7 +43,7 @@ impl Actions {
 
     }
 
-    pub fn update(&mut self, message: Message, notes: &mut app::Notes) -> iced::Command<app::Message> {
+    pub fn update(&mut self, message: Message, test: &mut i32) -> iced::Command<app::Message> {
 
         match message {
             Message::Toggle => {
@@ -54,7 +54,7 @@ impl Actions {
                 self.tt += 1;
 
 
-                notes.test += 1;
+                *test += 1;
 
                 Command::none()
             },

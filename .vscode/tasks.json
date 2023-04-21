@@ -6,7 +6,7 @@
 			"label": "build",
 			"command": "build",
 			"args": [
-				"--release"
+				
 			],
 			"problemMatcher": [
 				"$rustc"
