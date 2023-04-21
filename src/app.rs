@@ -3,7 +3,7 @@
 use iced::executor;
 use iced::{Application, Command, Element, Theme};
 
-use iced::widget::{text, column, Column};
+use iced::widget::{text, column, Column, Space};
 
 use crate::actions::{Actions};
 
@@ -59,12 +59,16 @@ impl Application for Notes {
 
         
 
-        let child = self.actions.view_fn();
+
+        column![
+            Space::new(0, 5),
+
+            self.actions.view(),
+
+        ]
+        .into()
+
         
-        Column::new()
-            .push(text("yo"))
-            .push(child)
-            .into()
     
 
     }

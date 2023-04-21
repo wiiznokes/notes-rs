@@ -6,6 +6,8 @@ mod app;
 use app::{Notes};
 
 mod actions;
+mod dirs_tree;
+mod onglets;
 
 
 pub fn main() -> color_eyre::Result<()> {
