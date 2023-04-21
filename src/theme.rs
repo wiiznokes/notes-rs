@@ -1,8 +1,5 @@
 
 
-use iced::{application, color, Color};
-
-use iced::widget::{button, text, container}; 
 
 
 
@@ -10,31 +7,11 @@ use iced::widget::{button, text, container};
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Theme;
 
+use iced::{application};
 
-#[derive(Debug, Clone, Copy, Default)]
-struct Colors {
-    red: Color,
-    dark_grey: Color,
-    grey: Color,
-    blue_green: Color,
-    green: Color,
-    light_grey: Color
-}
+use crate::theme::colors::Colors;
 
-impl Colors {
-
-
-    fn new() -> Self {
-        Self {
-            red: color!(0xFF, 0x00, 0x00),
-            dark_grey: color!(0x1A, 0x1A, 0x1A),
-            grey: color!(0x80, 0x80, 0x80),
-            blue_green: color![0x45, 0x85, 0x88],
-            green: color![0x45, 0x85, 0x88],
-            light_grey: color!(0x28, 0x28, 0x28),
-        }
-    }
-}
+use iced::widget::{button, text, container}; 
 
 
 
@@ -112,6 +89,46 @@ impl container::StyleSheet for Theme {
         
     }
 }
+
+
+
+
+
+pub mod colors {
+
+    use iced::{color, Color};
+
+    #[derive(Debug, Clone, Copy, Default)]
+    pub struct Colors {
+        pub red: Color,
+        pub dark_grey: Color,
+        pub grey: Color,
+        pub blue_green: Color,
+        pub green: Color,
+        pub light_grey: Color
+    }
+    
+
+    impl Colors {
+
+        pub fn new() -> Self {
+            Self {
+                red: color!(0xFF, 0x00, 0x00),
+                dark_grey: color!(0x1A, 0x1A, 0x1A),
+                grey: color!(0x80, 0x80, 0x80),
+                blue_green: color![0x45, 0x85, 0x88],
+                green: color![0x45, 0x85, 0x88],
+                light_grey: color!(0x28, 0x28, 0x28),
+            }
+        }
+    }
+}
+
+
+
+
+
+
 
 
 
