@@ -1,6 +1,9 @@
 
 
-use iced::Length;
+
+use iced::{Length};
+
+use iced;
 
 
 use crate::theme::widget::{Element, Column, Row, Text, Container};
@@ -51,7 +54,7 @@ impl DirsTree {
 
         
 
-        let content: Column<app::Message, iced::Renderer<theme::Theme>> = Column::new()
+        let tree: Column<app::Message, iced::Renderer<theme::Theme>> = Column::new()
             .padding(10)
             .push(Text::new("v D projet1"))
             .push(Text::new("    F main.rs"))
@@ -61,7 +64,16 @@ impl DirsTree {
             .push(Text::new("        > D privateProject"))
             .push(Text::new("F file.md"))
             .push(Text::new("F file.txt")).into();
+        
+        
        
-       content.into()
+        let content = Container::new(tree)
+            .height(Length::Fill)
+            .style(theme::Container::Bordered);
+
+        Container::new(content)
+            .height(Length::Fill)
+            .padding(10).into()
+        
     }
 }

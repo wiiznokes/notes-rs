@@ -2,7 +2,7 @@
 
 use iced::{application, color, Color};
 
-use iced::widget::{button, text}; 
+use iced::widget::{button, text, container}; 
 
 
 
@@ -84,6 +84,37 @@ impl text::StyleSheet for Theme {
         }
     }
 }
+
+
+
+#[derive(Debug, Clone, Copy, Default)]
+pub enum Container {
+    #[default]
+    Default,
+    Bordered,
+}
+
+
+impl container::StyleSheet for Theme {
+    type Style = Container;
+
+    fn appearance(&self, style: &Self::Style) -> container::Appearance {
+        let colors = Colors::new();
+        match style {
+            Container::Default => container::Appearance::default(),
+            Container::Bordered => container::Appearance {
+                border_color: colors.green,
+                border_width: 1f32,
+                border_radius: 10f32,
+                ..Default::default()
+            },
+        }
+        
+    }
+}
+
+
+
 
 // Always import widget types from this module since it
 // uses our custom theme instead of the built-in iced::Theme.
