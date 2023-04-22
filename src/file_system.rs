@@ -6,7 +6,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DirNode {
     pub path: PathBuf,
     pub is_expand: bool,
@@ -14,13 +14,13 @@ pub struct DirNode {
     pub content: Vec<Node>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Node {
     Dir(DirNode),
     File(FileNode),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FileNode {
     pub extension: String,
     pub full_name: String,
@@ -61,7 +61,7 @@ impl Node {
 
 
 // Vérifie si le chemin est un répertoire existant
-fn is_dir_exist(path: &Path) -> Result<(), String> {
+pub fn is_dir_exist(path: &Path) -> Result<(), String> {
     match fs::metadata(path) {
         Ok(metadata) => {
             if metadata.is_dir() {
@@ -91,7 +91,8 @@ pub fn insert_node_sorted(node: Node, content: &mut Vec<Node>) {
 
 
 // Fonction qui crée une structure DirNode remplie avec les données du répertoire spécifié
-fn create_dir_node(path: &Path) -> Result<DirNode, String> {
+pub fn create_dir_node(path: &Path) -> Result<DirNode, String> {
+    
     is_dir_exist(path)?;
 
 
@@ -126,14 +127,6 @@ fn create_dir_node(path: &Path) -> Result<DirNode, String> {
                     Node::Dir(create_dir_node(&entry_path)?)
                 } else {
                     let entry_path_owned = entry_path.to_owned();
-
-                    let log = entry_path_owned
-                        .file_name()
-                        .unwrap_or_default()
-                        .to_string_lossy()
-                        .into_owned();
-
-                    println!("{log}");
                     
                     Node::File(FileNode {
                         extension: entry_path_owned
@@ -175,7 +168,8 @@ fn create_dir_node(path: &Path) -> Result<DirNode, String> {
 
 
 
-fn print_dir_node(node: &DirNode, indent: usize) {
+pub fn print_dir_node(node: &DirNode, indent: usize) {
+
     let prefix = if node.is_expand { "[-]" } else { "[+]" };
     println!("{:indent$}{} {}", "", prefix, node.full_name, indent = indent);
 
@@ -189,19 +183,3 @@ fn print_dir_node(node: &DirNode, indent: usize) {
     }
 }
 
-pub fn test_file_system() -> Result<(), String> {
-    let path = Path::new("aaa_test");
-    match create_dir_node(path) {
-        Ok(dir_node) => {
-            
-            print_dir_node(&dir_node, 4);
-
-            Ok(())
-        }
-        Err(error) => {
-            eprintln!("{}", error);
-            Err("".to_string())
-        }
-        
-    }
-}
