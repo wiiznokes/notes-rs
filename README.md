@@ -9,6 +9,7 @@
 - https://github.com/pop-os/cosmic-epoch
 - https://github.com/pop-os/cosmic-text
 - https://github.com/pop-os/cosmic-text-editor
+- https://github.com/iced-rs/iced_aw
 
 
 ## example
