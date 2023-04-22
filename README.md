@@ -46,8 +46,11 @@ column {
 
 ## Dependencies Fedora 
 
-(not necessary relevant, used for cosmic text editor)
-`sudo dnf install freetype-devel expat-devel fontconfig-devel rust-gdk-sys+default-devel`
+- for iced
+`sudo dnf install freetype-devel expat-devel fontconfig-devel`
+
+- for cosmic (not used in here)
+`sudo dnf install rust-gdk-sys+default-devel`
 
 
 ## fonctionnalité
