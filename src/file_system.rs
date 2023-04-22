@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use std::collections::HashMap;
+
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -11,7 +11,7 @@ pub struct DirNode {
     pub path: PathBuf,
     pub is_expand: bool,
     pub full_name: String,
-    pub content: HashMap<String, Node>,
+    pub content: Vec<Node>,
 }
 
 #[derive(Debug)]
@@ -29,6 +29,37 @@ pub struct FileNode {
 
 
 
+
+
+
+
+impl Node {
+    
+
+    pub fn is_dir(&self) -> bool {
+        match &self {
+            Node::Dir(_) => true,
+            Node::File(_) => false
+        }
+    }
+
+    pub fn path(&self) -> PathBuf {
+        match &self {
+            Node::Dir(dir) => dir.path.clone(),
+            Node::File(file) => file.path.clone()
+        }
+    }
+
+
+    pub fn full_name(&self) -> String {
+        match &self {
+            Node::Dir(dir) => dir.full_name.clone(),
+            Node::File(file) => file.full_name.clone()
+        }
+    }
+}
+
+
 // Vérifie si le chemin est un répertoire existant
 fn is_dir_exist(path: &Path) -> Result<(), String> {
     match fs::metadata(path) {
@@ -43,20 +74,21 @@ fn is_dir_exist(path: &Path) -> Result<(), String> {
     }
 }
 
-// Fonction pour créer la clé de la HashMap
-fn create_key(path: &Path) -> String {
-    let name = path
-        .file_name()
-        .unwrap_or_default()
-        .to_string_lossy()
-        .into_owned();
 
-    if path.is_dir() {
-        format!("d_{}", name)
-    } else {
-        format!("f_{}", name)
+/// Si l'élément est présent dans le tableau, la méthode retourne l'index de l'élément.
+/// Sinon, elle retourne l'index où l'élément pourrait être inséré pour maintenir l'ordre de tri.
+pub fn insert_node_sorted(node: Node, content: &mut Vec<Node>) {
+    let is_dir = node.is_dir();
+    let idx = content
+        .binary_search_by_key(&(!is_dir, node.full_name()), |n| (!n.is_dir(), n.full_name()));
+
+    match idx {
+        Ok(idx) => content.insert(idx, node),
+        Err(idx) => content.insert(idx, node),
     }
 }
+
+
 
 // Fonction qui crée une structure DirNode remplie avec les données du répertoire spécifié
 fn create_dir_node(path: &Path) -> Result<DirNode, String> {
@@ -70,7 +102,7 @@ fn create_dir_node(path: &Path) -> Result<DirNode, String> {
         .into_owned();
 
 
-    let mut content = HashMap::new();
+    let mut content = Vec::new();
     let dir_entries = match fs::read_dir(path) {
         Ok(entries) => entries,
         Err(error) => {
@@ -117,10 +149,9 @@ fn create_dir_node(path: &Path) -> Result<DirNode, String> {
                         path: entry_path_owned,
                     })
                 };
-
                 
-
-                content.insert(create_key(&entry_path), node);
+                insert_node_sorted(node, &mut content);
+                
             }
             Err(error) => {
                 return Err(format!(
@@ -141,11 +172,14 @@ fn create_dir_node(path: &Path) -> Result<DirNode, String> {
 }
 
 
+
+
+
 fn print_dir_node(node: &DirNode, indent: usize) {
     let prefix = if node.is_expand { "[-]" } else { "[+]" };
     println!("{:indent$}{} {}", "", prefix, node.full_name, indent = indent);
 
-    for (_, content_node) in &node.content {
+    for content_node in &node.content {
         match content_node {
             Node::Dir(dir_node) => print_dir_node(dir_node, indent + 2),
             Node::File(file_node) => {
@@ -156,12 +190,11 @@ fn print_dir_node(node: &DirNode, indent: usize) {
 }
 
 pub fn test_file_system() -> Result<(), String> {
-    let path = Path::new("src");
+    let path = Path::new("aaa_test");
     match create_dir_node(path) {
         Ok(dir_node) => {
             
             print_dir_node(&dir_node, 4);
-            println!("{:#?}", dir_node);
 
             Ok(())
         }
