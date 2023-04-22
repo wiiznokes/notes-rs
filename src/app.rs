@@ -2,6 +2,9 @@
 #![allow(unused_variables)]
 
 
+use std::env;
+use std::path::Path;
+
 use iced::{executor};
 use iced::{Application, Command};
 
@@ -9,6 +12,7 @@ use iced::{Application, Command};
 
 use crate::actions::{self, Actions};
 use crate::dirs_tree::{self, DirsTree};
+use crate::file_system;
 use crate::onglets::{self, Onglets};
 
 use crate::theme::{self};
@@ -19,6 +23,7 @@ use iced::widget::{Space};
 
 
 
+
 pub struct Notes {
 
     
@@ -26,12 +31,15 @@ pub struct Notes {
     pub dirs_tree: DirsTree,
     pub onglets: Onglets,
 
+    pub file_system: Option<file_system::DirNode>,
+
     pub test: i32,
 }
 
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    Loaded(Result<file_system::DirNode, String>),
     Actions(actions::Message),
     DirsTree(dirs_tree::Message),
     Onglets(onglets::Message),
@@ -59,13 +67,22 @@ impl Application for Notes {
             actions: Actions::new(),
             dirs_tree: DirsTree::new(),
             onglets: Onglets::new(),
+            file_system: None,
             test: 0
         };
+        
+        
+        let mut args = env::args();
+        // prog name
+        args.next();
+        
+        let arg = args.next();
 
-
-        let command = Command::none();
-
-      
+        let command = if let Some(dir_path) = arg {
+            Command::perform(load(dir_path), Message::Loaded)
+        } else {
+            Command::none()
+        };
 
         (app, command)
     }
@@ -79,22 +96,31 @@ impl Application for Notes {
 
         
         match message {
+
+            Message::Loaded(res) => {
+                match res {
+                    Ok(dir_node) => { 
+                        file_system::print_dir_node(&dir_node, 0);
+                        self.file_system = Some(dir_node);
+                    },
+                    Err(error) => {
+                        println!("{error}");
+                    }
+                }
+                Command::none() 
+            }
+
             Message::Actions(sub_message) => {
 
-               
-
-                // call first function with mutable reference to actions
-                let command = self.actions.update(sub_message, &mut self.test);
-                
-                
-                // actions is no longer borrowed mutably at this point
-
-                Command::none()
+                self.actions.update(sub_message, &mut self.test)
 
             },
             Message::DirsTree(sub_message) => self.dirs_tree.update(sub_message),
             Message::Onglets(sub_message) => self.onglets.update(sub_message),
+
+            _ => Command::none()
         }
+
     }
 
    
@@ -113,13 +139,24 @@ impl Application for Notes {
             .into()
 
 
-    
-        
-    
-
     }
 
     
     
 }
 
+async fn load(path_str: String) -> Result<file_system::DirNode, String> {
+
+    let path = Path::new(&path_str);
+
+    match file_system::create_dir_node(path) {
+        Ok(dir_node) => {
+            
+            file_system::print_dir_node(&dir_node, 4);
+            
+            Ok(dir_node)
+        }
+        Err(error) => Err(error) 
+    }
+
+}
