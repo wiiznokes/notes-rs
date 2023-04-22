@@ -52,6 +52,7 @@ column {
 
 ## fonctionnalité
 
+- file type support plan: pdf, md, (html, CSS), plain text
 - tabs
 - modif
 - view .txt et .md
@@ -62,3 +63,34 @@ column {
 - create dirs
 - dirs and files navigation
 - select racine
+- search engine
+
+
+## idée
+
+majeurs fonctionnalitées:
+- search
+- view tree (must be reactive)
+- display (must be reactive, the display content must be cached)
+
+
+Pour view tree:
+
+Je veux faire un application en Rust qui afficher un repertoire sous forme d'arbre.
+Pense tu que ceci est une bonne approche pour ma structure de donnée ?
+
+struct dir_node {
+    path: Path,
+    is_expand: bool,
+    full_name: String,
+
+    content: HashMap<string, soit dir_node soit file_node>
+}
+
+
+
+struct file_node {
+    extension: String,
+    full_name: String,
+    path: Path
+}
