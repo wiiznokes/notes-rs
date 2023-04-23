@@ -12,7 +12,7 @@ use iced::{Element, Length};
 
 use crate::icons;
 
-use iced::widget::{row, Button, Column, Container, Row, Space, Text, TextInput, column};
+use iced::widget::{column, row, Button, Column, Container, Row, Space, Text, TextInput};
 
 use crate::app::{self};
 
@@ -78,6 +78,7 @@ impl DirsTree {
 
         let content = Container::new(tree)
             .height(Length::Fill)
+            .width(215f32)
             .style(iced::theme::Container::Box);
 
         Container::new(content)
@@ -87,19 +88,8 @@ impl DirsTree {
     }
 }
 
-/// construit une Column
-/// n'affiche pas le dirNode name
-/// itère sur tout le content
-/// si dir expand -> call recursive avec indent + 4 (ajout res to Col)
-/// si file ajout row
-/// return des columns imbriquées
-///
-///
-/// TODO: creer une fonction view_lign qui affiche
 fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
-    //let col = Column::new();
-
-    let mut v: Vec<Element<app::Message>> = Vec::new();
+    let mut view_rep: Vec<Element<app::Message>> = Vec::new();
 
     for node in racine.content.iter() {
         match node {
@@ -110,13 +100,13 @@ fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
                     Button::new(icons::chevron_right_icon())
                 };
 
-                v.push(
+                view_rep.push(
                     Row::new()
                         .push(Space::new(Length::Fixed(indent), 0))
                         .push(icon)
                         .push(
                             TextInput::new("placeholder", &dir.full_name_cached)
-                                .width(Length::Shrink)
+                                .width(Length::Fill)
                                 .size(15)
                                 .on_input(|value| {
                                     app::Message::DirsTree(Message::InputChanged(
@@ -129,18 +119,19 @@ fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
                 );
 
                 if dir.is_expand {
-                    let new_indent = indent + 4f32;
-                    v.push(view_tree(&dir, new_indent));
+                    let new_indent = indent + 15f32;
+                    view_rep.push(view_tree(&dir, new_indent));
                 }
             }
 
             Node::File(file) => {
-                v.push(
+                view_rep.push(
                     Row::new()
+                        .push(Space::new(Length::Fixed(indent), 0))
                         .push(Button::new(icons::file_icon()))
                         .push(
                             TextInput::new("placeholder", &file.full_name_cached)
-                                .width(Length::Shrink)
+                                .width(Length::Fill)
                                 .size(15)
                                 .on_input(|value| {
                                     app::Message::DirsTree(Message::InputChanged(
@@ -155,6 +146,5 @@ fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
         }
     }
 
-    column(v).into()
-    //col.into()
+    column(view_rep).into()
 }
