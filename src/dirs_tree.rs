@@ -48,14 +48,30 @@ impl DirsTree {
     ) -> iced::Command<app::Message> {
         match message {
             Message::InputChanged(value, path) => match files {
+                
                 Some(dir) => {
+
+                    println!("Hello! {}, {}", value, path.clone().display());
+
                     let node = get_node(dir, path);
+                    
 
                     match node {
-                        Some(Node::Dir(ref mut dir)) => dir.full_name_cached = value,
+                        Some(Node::Dir(ref mut dir)) => {
+                            println!("{}", dir.full_name_cached);
 
-                        Some(Node::File(ref mut file)) => file.full_name_cached = value,
-                        _ => {}
+                            dir.full_name_cached = value
+                        },
+
+                        Some(Node::File(ref mut file)) => {
+                            println!("{}", file.full_name_cached);
+
+                            file.full_name_cached = value
+                        
+                        },
+                        _ => {
+                            println!("Aucun node trouvé");
+                        }
                     }
                 }
 
