@@ -22,7 +22,7 @@ use iced::{ Element};
 use iced::widget::{Space};
 
 
-
+use crate::file_system::{FileNode, Node, DirNode};
 
 pub struct Notes {
 
@@ -31,14 +31,14 @@ pub struct Notes {
     pub dirs_tree: DirsTree,
     pub onglets: Onglets,
 
-    pub file_system: Option<file_system::DirNode>,
+    pub file_system: Option<Node>,
 
 }
 
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    Loaded(Result<file_system::DirNode, String>),
+    Loaded(Result<Node, String>),
     Actions(actions::Message),
     DirsTree(dirs_tree::Message),
     Onglets(onglets::Message),
@@ -97,13 +97,14 @@ impl Application for Notes {
 
             Message::Loaded(res) => {
                 match res {
-                    Ok(dir_node) => { 
-                        file_system::print_dir_node(&dir_node, 0);
-                        self.file_system = Some(dir_node);
+                    Ok(Node::Dir(dir_node)) => {
+                        dir_node.print_dir_node(0);
+                        self.file_system = Some(Node::Dir(dir_node));
                     },
                     Err(error) => {
                         println!("{error}");
-                    }
+                    },
+                    _ => { panic!() }
                 }
                 Command::none() 
             }
@@ -113,7 +114,7 @@ impl Application for Notes {
                 self.actions.update(sub_message)
 
             },
-            Message::DirsTree(sub_message) => self.dirs_tree.update(sub_message),
+            Message::DirsTree(sub_message) => self.dirs_tree.update(sub_message, &mut self.file_system),
             Message::Onglets(sub_message) => self.onglets.update(sub_message),
 
             _ => Command::none()
@@ -143,16 +144,16 @@ impl Application for Notes {
     
 }
 
-async fn load(path_str: String) -> Result<file_system::DirNode, String> {
+async fn load(path_str: String) -> Result<Node, String> {
 
     let path = Path::new(&path_str);
 
     match file_system::create_dir_node(path) {
         Ok(dir_node) => {
             
-            file_system::print_dir_node(&dir_node, 4);
+            dir_node.print_dir_node(4);
             
-            Ok(dir_node)
+            Ok(Node::Dir(dir_node))
         }
         Err(error) => Err(error) 
     }

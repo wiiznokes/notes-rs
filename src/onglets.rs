@@ -68,6 +68,7 @@ impl Onglets {
         let test = 
             TextInput::new("placeholder", &self.value)
             .width(Length::Fill)
+            .size(15)
             .on_input( |value| app::Message::Onglets(Message::Modif(value)));
 
      

@@ -3,7 +3,7 @@
 
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Path, PathBuf, Iter};
 
 
 #[derive(Debug, Clone)]
@@ -171,20 +171,62 @@ pub fn create_dir_node(path: &Path) -> Result<DirNode, String> {
 
 
 
+impl DirNode {
+    
+    pub fn print_dir_node(&self, indent: usize) {
 
+        let prefix = if self.is_expand { "[-]" } else { "[+]" };
+        println!("{:indent$}{} {}", "", prefix, self.full_name, indent = indent);
 
-pub fn print_dir_node(node: &DirNode, indent: usize) {
-
-    let prefix = if node.is_expand { "[-]" } else { "[+]" };
-    println!("{:indent$}{} {}", "", prefix, node.full_name, indent = indent);
-
-    for content_node in &node.content {
-        match content_node {
-            Node::Dir(dir_node) => print_dir_node(dir_node, indent + 2),
-            Node::File(file_node) => {
-                println!("{:indent$} [F] {}", "", file_node.full_name, indent = indent + 2);
+        for content_node in &self.content {
+            match content_node {
+                Node::Dir(dir_node) => self.print_dir_node(indent + 2),
+                Node::File(file_node) => {
+                    println!("{:indent$} [F] {}", "", file_node.full_name, indent = indent + 2);
+                }
             }
         }
     }
+
+
+    
+    
 }
 
+
+
+pub fn get_node(dir: &Node, path: PathBuf) -> Option<&mut Node> {
+
+    let mut current = dir;
+
+    for iter in path.iter() {
+
+        match current {
+            Node::File(_) => {
+                return None;
+            },
+
+            Node::Dir(dir) => {
+                let  next_node = dir.content.iter().find(|node| {
+                    node.full_name() == iter.to_str().unwrap()
+                });
+                
+                
+                match next_node {
+    
+                    None => {
+                        return None;
+                    },
+                    Some(node) => {
+                        current = Box::new(node).as_mut();
+                    }
+                }
+
+            }
+        }
+    }
+    
+    Some(current)
+
+    
+}
