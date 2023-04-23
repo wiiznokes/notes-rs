@@ -9,7 +9,7 @@ use std::path::{Iter, Path, PathBuf};
 #[derive(Debug, Clone)]
 pub struct DirNode {
     pub path: PathBuf,
-    pub is_expand: bool,
+    pub expanded: bool,
     pub full_name: String,
     pub full_name_cached: String,
     pub content: Vec<Node>,
@@ -153,7 +153,7 @@ pub fn create_dir_node(path: &Path) -> Result<DirNode, String> {
 
     Ok(DirNode {
         path: path.to_path_buf(),
-        is_expand: true,
+        expanded: false,
         full_name: dir_name.clone(),
         full_name_cached: dir_name,
         content,

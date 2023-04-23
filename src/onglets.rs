@@ -4,7 +4,7 @@
 #![allow(unused_parens)]
 
 use iced::window::icon;
-use iced::Command;
+use iced::{Command, Alignment};
 use iced::{Element, Length};
 
 use iced::widget::{column, row, Button, Column, Container, Text, TextInput};
@@ -17,44 +17,36 @@ use iced::alignment;
 
 #[derive(Clone, Debug)]
 pub struct Onglets {
-    value: String,
 }
 
 #[derive(Clone, Debug)]
 pub enum Message {
-    Modif(String),
     Close,
 }
 
 impl Onglets {
     pub fn new() -> Onglets {
         Onglets {
-            value: "".to_string(),
         }
     }
 
     pub fn update(&mut self, message: Message) -> iced::Command<app::Message> {
         match message {
-            Message::Modif(value) => {
-                self.value = value;
-            }
+            
             Message::Close => todo!(),
         }
 
-        Command::none()
     }
 
     pub fn view(&self, notes: &app::Notes) -> Element<app::Message> {
-        let test = TextInput::new("placeholder", &self.value)
+        let text = Text::new("hello")
             .width(Length::Fill)
-            .size(15)
-            .on_input(|value| app::Message::Onglets(Message::Modif(value)));
+            .height(Length::Fill)
+            .horizontal_alignment(alignment::Horizontal::Center)
+            .vertical_alignment(alignment::Vertical::Center);
 
-        let i = Button::new(icons::file_icon());
 
-        let c = row![test, i];
-
-        let content = Container::new(c)
+        let content = Container::new(text)
             .style(iced::theme::Container::Box)
             .height(Length::Fill)
             .width(Length::Fill);

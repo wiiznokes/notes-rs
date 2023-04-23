@@ -28,6 +28,8 @@ pub enum Message {
     Remove,
 
     InputChanged(String, PathBuf),
+    Expand(PathBuf),
+
     Rename,
     NewFile,
     NewDir,
@@ -44,45 +46,58 @@ impl DirsTree {
     pub fn update(
         &mut self,
         message: Message,
-        files: &mut Option<Node>,
+        root_node_opt: &mut Option<Node>,
     ) -> iced::Command<app::Message> {
-        match message {
-            Message::InputChanged(value, path) => match files {
-                
-                Some(dir) => {
-
+        match root_node_opt {
+            Some(root_node) => match message {
+                Message::InputChanged(value, path) => {
                     println!("Hello! {}, {}", value, path.clone().display());
 
-                    let node = get_node(dir, path);
-                    
+                    let node = get_node(root_node, path);
 
                     match node {
                         Some(Node::Dir(ref mut dir)) => {
                             println!("{}", dir.full_name_cached);
 
-                            dir.full_name_cached = value
-                        },
+                            dir.full_name_cached = value;
+                        }
 
                         Some(Node::File(ref mut file)) => {
                             println!("{}", file.full_name_cached);
 
-                            file.full_name_cached = value
-                        
-                        },
+                            file.full_name_cached = value;
+                        }
                         _ => {
-                            println!("Aucun node trouvé");
+                            panic!("Aucun node trouvé");
                         }
                     }
                 }
 
-                _ => {}
+                Message::Expand(path) => {
+                    let node = get_node(root_node, path);
+
+                    match node {
+                        Some(Node::Dir(ref mut dir)) => {
+                            println!("{}", dir.full_name_cached);
+
+                            dir.expanded = !dir.expanded;
+                        }
+
+                        _ => {
+                            panic!("not a dir when expand");
+                        }
+                    }
+                }
+
+                _ => {
+                    todo!()
+                }
             },
 
             _ => {
-                todo!()
-            }
+                panic!("no root_node"); // should never happended, since there is nothing to show
+            } 
         }
-
         Command::none()
     }
 
@@ -110,10 +125,12 @@ fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
     for node in racine.content.iter() {
         match node {
             Node::Dir(dir) => {
-                let icon = if (dir.is_expand) {
+                let icon = if (dir.expanded) {
                     Button::new(icons::chevron_down_icon())
+                        .on_press(app::Message::DirsTree(Message::Expand(node.path())))
                 } else {
                     Button::new(icons::chevron_right_icon())
+                        .on_press(app::Message::DirsTree(Message::Expand(node.path())))
                 };
 
                 view_rep.push(
@@ -134,7 +151,7 @@ fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
                         .into(),
                 );
 
-                if dir.is_expand {
+                if dir.expanded {
                     let new_indent = indent + 15f32;
                     view_rep.push(view_tree(&dir, new_indent));
                 }
@@ -164,3 +181,6 @@ fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
 
     column(view_rep).into()
 }
+
+
+
