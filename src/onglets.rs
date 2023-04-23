@@ -71,7 +71,7 @@ impl Onglets {
         
         let test = 
             TextInput::new("placeholder", &self.value)
-            .width(Length::Fill)
+            .width(Length::Shrink)
             .size(15)
             .on_input( |value| app::Message::Onglets(Message::Modif(value)));
 
@@ -83,12 +83,12 @@ impl Onglets {
         let content = Container::new(c)
             .style(iced::theme::Container::Box)
             .height(Length::Fill)
-            .width(Length::Fill);
+            .width(Length::Shrink);
 
         Container::new(content)
             .padding(10)
             .height(Length::Fill)
-            .width(Length::Fill)
+            .width(Length::Shrink)
             .into()
         
     }

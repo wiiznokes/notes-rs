@@ -164,7 +164,7 @@ pub fn create_dir_node(path: &Path) -> Result<DirNode, String> {
 
     Ok(DirNode {
         path: path.to_path_buf(),
-        is_expand: false,
+        is_expand: true,
         full_name: dir_name.clone(),
         full_name_cached: dir_name,
         content,

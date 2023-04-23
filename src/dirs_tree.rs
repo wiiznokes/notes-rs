@@ -3,16 +3,16 @@
 #![allow(unused_imports)]
 #![allow(unused_parens)]
 
-
-
+use std::cell::RefCell;
 use std::path::PathBuf;
+use std::rc::Rc;
 
 use iced::Command;
 use iced::{Element, Length};
 
 use crate::icons;
 
-use iced::widget::{row, Button, Column, Container, Row, Space, Text, TextInput};
+use iced::widget::{row, Button, Column, Container, Row, Space, Text, TextInput, column};
 
 use crate::app::{self};
 
@@ -46,33 +46,31 @@ impl DirsTree {
         message: Message,
         files: &mut Option<Node>,
     ) -> iced::Command<app::Message> {
-
-
         match message {
             Message::InputChanged(value, path) => match files {
-
                 Some(dir) => {
                     let node = get_node(dir, path);
-
 
                     match node {
                         Some(Node::Dir(ref mut dir)) => dir.full_name_cached = value,
 
                         Some(Node::File(ref mut file)) => file.full_name_cached = value,
-                        _ => { }
+                        _ => {}
                     }
                 }
 
-                _ => { }
+                _ => {}
             },
 
-            _ => { todo!() } 
+            _ => {
+                todo!()
+            }
         }
 
         Command::none()
     }
 
-    pub fn view(&self, files: &Option<Node>) -> Element<app::Message> {
+    pub fn view<'a>(&'a self, files: &'a Option<Node>) -> Element<app::Message> {
         let tree = match files {
             Some(Node::Dir(dir)) => view_tree(dir, 0f32),
             _ => Text::new("nothing to show").into(),
@@ -95,10 +93,15 @@ impl DirsTree {
 /// si dir expand -> call recursive avec indent + 4 (ajout res to Col)
 /// si file ajout row
 /// return des columns imbriquées
+///
+///
+/// TODO: creer une fonction view_lign qui affiche
 fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
-    let col = Column::new();
+    //let col = Column::new();
 
-    for node in &racine.content {
+    let mut v: Vec<Element<app::Message>> = Vec::new();
+
+    for node in racine.content.iter() {
         match node {
             Node::Dir(dir) => {
                 let icon = if (dir.is_expand) {
@@ -107,7 +110,7 @@ fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
                     Button::new(icons::chevron_right_icon())
                 };
 
-                col.push(
+                v.push(
                     Row::new()
                         .push(Space::new(Length::Fixed(indent), 0))
                         .push(icon)
@@ -121,29 +124,37 @@ fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
                                         node.path(),
                                     ))
                                 }),
-                        ),
+                        )
+                        .into(),
                 );
 
                 if dir.is_expand {
                     let new_indent = indent + 4f32;
-                    col.push(view_tree(&dir, new_indent));
+                    v.push(view_tree(&dir, new_indent));
                 }
             }
 
             Node::File(file) => {
-                col.push(
-                    Row::new().push(Button::new(icons::file_icon())).push(
-                        TextInput::new("placeholder", &file.full_name_cached)
-                            .width(Length::Shrink)
-                            .size(15)
-                            .on_input(|value| {
-                                app::Message::DirsTree(Message::InputChanged(value, node.path()))
-                            }),
-                    ),
+                v.push(
+                    Row::new()
+                        .push(Button::new(icons::file_icon()))
+                        .push(
+                            TextInput::new("placeholder", &file.full_name_cached)
+                                .width(Length::Shrink)
+                                .size(15)
+                                .on_input(|value| {
+                                    app::Message::DirsTree(Message::InputChanged(
+                                        value,
+                                        node.path(),
+                                    ))
+                                }),
+                        )
+                        .into(),
                 );
             }
         }
     }
 
-    col.into()
+    column(v).into()
+    //col.into()
 }

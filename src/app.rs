@@ -102,7 +102,7 @@ impl Application for Notes {
             Message::Loaded(res) => {
                 match res {
                     Ok(Node::Dir(dir_node)) => {
-                        dir_node.print_dir_node(0);
+                        //dir_node.print_dir_node(0);
                         self.file_system = Some(Node::Dir(dir_node));
                     },
                     Err(error) => {
@@ -155,7 +155,7 @@ async fn load(path_str: String) -> Result<Node, String> {
     match file_system::create_dir_node(path) {
         Ok(dir_node) => {
             
-            dir_node.print_dir_node(4);
+            //dir_node.print_dir_node(4);
             
             Ok(Node::Dir(dir_node))
         }
