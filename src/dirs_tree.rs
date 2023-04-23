@@ -2,6 +2,8 @@
 #![allow(unused_variables)]
 
 
+use std::path::PathBuf;
+
 use iced::{Command};
 use iced::{Length, Element};
 
@@ -12,7 +14,7 @@ use iced::widget::{Column, Text, Container};
 
 use crate::app::{self};
 
-
+use crate::file_system;
 
 
 #[derive(Clone, Debug)]
@@ -27,6 +29,8 @@ pub enum Message {
     Open,
     Move,
     Remove,
+
+    InputChanged,
     Rename,
     NewFile,
     NewDir,
@@ -48,18 +52,21 @@ impl DirsTree {
     }
 
 
-    pub fn update(&mut self, _message: Message) -> iced::Command<app::Message> {
+    pub fn update(&mut self, message: Message) -> iced::Command<app::Message> {
+        
+        match message {
+            Message::InputChanged => {},
 
-        let ret = Command::none();
-        {}
-        ret
+            _ => { }
+        }
+
+
+        Command::none()
     }
 
    
 
-    pub fn view(&self) -> Element<app::Message> {
-
-        
+    pub fn view(&self, files: &Option<file_system::DirNode>) -> Element<app::Message> {
 
         let tree: Column<app::Message> = Column::new()
             .padding(10)
@@ -83,4 +90,13 @@ impl DirsTree {
             .padding(10).into()
         
     }
+
+
+    
 }
+
+
+
+//fn view_tree(files: file_system::DirNode) -> Element<app::Message> {
+
+//}

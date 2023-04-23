@@ -33,7 +33,6 @@ pub struct Notes {
 
     pub file_system: Option<file_system::DirNode>,
 
-    pub test: i32,
 }
 
 
@@ -68,7 +67,6 @@ impl Application for Notes {
             dirs_tree: DirsTree::new(),
             onglets: Onglets::new(),
             file_system: None,
-            test: 0
         };
         
         
@@ -112,7 +110,7 @@ impl Application for Notes {
 
             Message::Actions(sub_message) => {
 
-                self.actions.update(sub_message, &mut self.test)
+                self.actions.update(sub_message)
 
             },
             Message::DirsTree(sub_message) => self.dirs_tree.update(sub_message),
@@ -133,7 +131,7 @@ impl Application for Notes {
             .push(self.actions.view())
             .push(
                 Row::new()
-                    .push(self.dirs_tree.view())
+                    .push(self.dirs_tree.view(&self.file_system))
                     .push(self.onglets.view(&self))
             )
             .into()

@@ -2,16 +2,15 @@
 #![allow(unused_variables)]
 
 
+use iced::window::icon;
 use iced::{Length, Element};
 use iced::{Command};
 
-use iced::widget::{Text, Container};
+use iced::widget::{Text, Container, TextInput, Column, Button, column, row};
 
 use crate::app::{self};
 
-
-
-
+use crate::icons;
 
 use iced::alignment;
 
@@ -21,12 +20,14 @@ use iced::alignment;
 #[derive(Clone, Debug)]
 pub struct Onglets {
 
+    value: String
 
 }
 
 
 #[derive(Clone, Debug)]
 pub enum Message {
+    Modif(String),
     Close
 }
 
@@ -38,16 +39,21 @@ impl Onglets {
 
     pub fn new () -> Onglets {
 
-        Onglets {  }
+        Onglets { 
+            value: "".to_string() 
+        }
 
     }
 
 
-    pub fn update(&mut self, _message: Message) -> iced::Command<app::Message> {
+    pub fn update(&mut self, message: Message) -> iced::Command<app::Message> {
+        
+        match message {
+            Message::Modif(value) => { self.value = value; },
+            Message::Close => todo!(),
+        }
 
-        let ret = Command::none();
-        {}
-        ret
+        Command::none()
     }
 
    
@@ -55,15 +61,21 @@ impl Onglets {
     pub fn view(&self, notes: &app::Notes) -> Element<app::Message> {
 
 
-        let onglets = Text::new(format!("{}", notes.test))
-            .height(Length::Fill)
-            .width(Length::Fill)
-            .horizontal_alignment(alignment::Horizontal::Center)
-            .vertical_alignment(alignment::Vertical::Center);
+        
+        
        
+        
+        let test = 
+            TextInput::new("placeholder", &self.value)
+            .width(Length::Fill)
+            .on_input( |value| app::Message::Onglets(Message::Modif(value)));
 
+     
+        let i = Button::new(icons::file_icon());
 
-        let content = Container::new(onglets)
+        let c = row![test, i];
+
+        let content = Container::new(c)
             .style(iced::theme::Container::Box)
             .height(Length::Fill)
             .width(Length::Fill);
@@ -76,3 +88,5 @@ impl Onglets {
         
     }
 }
+
+

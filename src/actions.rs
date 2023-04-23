@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
-
+#![allow(unreachable_code)]
 
 use iced::{Command};
 
@@ -43,23 +43,17 @@ impl Actions {
 
     }
 
-    pub fn update(&mut self, message: Message, test: &mut i32) -> iced::Command<app::Message> {
+    pub fn update(&mut self, message: Message) -> iced::Command<app::Message> {
 
         match message {
-            Message::Toggle => {
-
-                println!("hella!");
-
-                println!("{}", self.tt);
-                self.tt += 1;
-
-
-                *test += 1;
-
-                Command::none()
-            },
-            _ => Command::none()
+            Message::Toggle => todo!(),
+            Message::Settings => todo!(),
+            Message::Push => todo!(),
+            Message::Fetch => todo!(),
+            Message::Edit => todo!(),
         }
+        
+        Command::none()
     }
 
 
@@ -82,7 +76,7 @@ impl Actions {
             .push(Button::new("Edit"))
             .spacing(10)
             .width(Length::Shrink);
-        
+
 
         Row::new()
             .push(Space::new(5, 0))

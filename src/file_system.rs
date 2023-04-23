@@ -11,6 +11,7 @@ pub struct DirNode {
     pub path: PathBuf,
     pub is_expand: bool,
     pub full_name: String,
+    pub full_name_cached: String,
     pub content: Vec<Node>,
 }
 
@@ -24,6 +25,7 @@ pub enum Node {
 pub struct FileNode {
     pub extension: String,
     pub full_name: String,
+    pub full_name_cached: String,
     pub path: PathBuf,
 }
 
@@ -136,6 +138,11 @@ pub fn create_dir_node(path: &Path) -> Result<DirNode, String> {
                             .unwrap_or_default()
                             .to_string_lossy()
                             .into_owned(),
+                        full_name_cached: entry_path_owned
+                        .file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .into_owned(),
                         path: entry_path_owned,
                     })
                 };
@@ -156,7 +163,8 @@ pub fn create_dir_node(path: &Path) -> Result<DirNode, String> {
     Ok(DirNode {
         path: path.to_path_buf(),
         is_expand: false,
-        full_name: dir_name,
+        full_name: dir_name.clone(),
+        full_name_cached: dir_name,
         content,
     })
 }

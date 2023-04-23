@@ -14,7 +14,7 @@ mod dirs_tree;
 mod onglets;
 
 mod file_system;
-
+mod icons;
 
 pub fn main() -> color_eyre::Result<()> {
 
