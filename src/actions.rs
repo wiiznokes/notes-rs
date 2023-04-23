@@ -4,14 +4,14 @@
 
 use iced::{Command};
 
-use iced::Length;
+use iced::{Length, Element};
 
 
-use crate::theme::widget::{Element, Button, Row, Text};
+use iced::widget::{Button, Row, Text};
 
 use crate::app::{self};
 
-use crate::theme:: {self};
+
 
 use iced::widget::{Space};
 
@@ -64,7 +64,7 @@ impl Actions {
 
 
 
-    pub fn view(&self) -> Element<app::Message, iced::Renderer<theme::Theme>> {
+    pub fn view(&self) -> Element<app::Message> {
 
 
         let left_actions = Row::new()
@@ -74,33 +74,22 @@ impl Actions {
             .push(Button::new("Settings"))
             .spacing(10)
             .width(Length::Fill);
+            
 
+        let right_actions = Row::new()
+            .push(Button::new("Push"))
+            .push(Button::new("Fetch"))
+            .push(Button::new("Edit"))
+            .spacing(10)
+            .width(Length::Shrink);
+        
 
         Row::new()
             .push(Space::new(5, 0))
             .push(left_actions)
-            .push(
-                Row::new()
-                    .push(Button::new(Text::new("Toggle")))
-                    .push(Button::new("Settings"))
-                    .spacing(10)
-                    .width(Length::Fill),
-            )
-            .push(
-                Row::new()
-                    .push(Button::new("Push"))
-                    .push(Button::new("Fetch"))
-                    .push(Button::new("Edit"))
-                    .spacing(10)
-                    .width(Length::Shrink),
-            )
+            .push(right_actions)
             .push(Space::new(5, 0))
             .into()
-  
-
-        
-
-        
        
         
     }

@@ -2,14 +2,14 @@
 #![allow(unused_variables)]
 
 
-use iced::Length;
+use iced::{Length, Element};
 use iced::{Command};
 
-use crate::theme::widget::{Element, Text, Container};
+use iced::widget::{Text, Container};
 
 use crate::app::{self};
 
-use crate::theme:: {self};
+
 
 
 
@@ -52,7 +52,7 @@ impl Onglets {
 
    
 
-    pub fn view(&self, notes: &app::Notes) -> Element<app::Message, iced::Renderer<theme::Theme>> {
+    pub fn view(&self, notes: &app::Notes) -> Element<app::Message> {
 
 
         let onglets = Text::new(format!("{}", notes.test))
@@ -64,7 +64,7 @@ impl Onglets {
 
 
         let content = Container::new(onglets)
-            .style(theme::Container::Bordered)
+            .style(iced::theme::Container::Box)
             .height(Length::Fill)
             .width(Length::Fill);
 

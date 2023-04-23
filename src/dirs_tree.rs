@@ -3,16 +3,14 @@
 
 
 use iced::{Command};
-use iced::{Length};
+use iced::{Length, Element};
 
 
 
 
-use crate::theme::widget::{Element, Column, Text, Container};
+use iced::widget::{Column, Text, Container};
 
 use crate::app::{self};
-
-use crate::theme:: {self};
 
 
 
@@ -59,11 +57,11 @@ impl DirsTree {
 
    
 
-    pub fn view(&self) -> Element<app::Message, iced::Renderer<theme::Theme>> {
+    pub fn view(&self) -> Element<app::Message> {
 
         
 
-        let tree: Column<app::Message, iced::Renderer<theme::Theme>> = Column::new()
+        let tree: Column<app::Message> = Column::new()
             .padding(10)
             .push(Text::new("v D projet1"))
             .push(Text::new("    F main.rs"))
@@ -78,7 +76,7 @@ impl DirsTree {
        
         let content = Container::new(tree)
             .height(Length::Fill)
-            .style(theme::Container::Bordered);
+            .style(iced::theme::Container::Box);
 
         Container::new(content)
             .height(Length::Fill)
