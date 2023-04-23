@@ -1,6 +1,9 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
-#![allow(unreachable_code)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
+
+
 
 use iced::{Command};
 
@@ -53,7 +56,6 @@ impl Actions {
             Message::Edit => todo!(),
         }
         
-        Command::none()
     }
 
 

@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 
 
 use std::fs;
@@ -195,7 +197,7 @@ impl DirNode {
 
 
 
-pub fn get_node(dir: &Node, path: PathBuf) -> Option<&mut Node> {
+pub fn get_node(dir: &mut Node, path: PathBuf) -> Option<&mut Node> {
 
     let mut current = dir;
 
@@ -207,7 +209,7 @@ pub fn get_node(dir: &Node, path: PathBuf) -> Option<&mut Node> {
             },
 
             Node::Dir(dir) => {
-                let  next_node = dir.content.iter().find(|node| {
+                let next_node: Option<&mut Node> = dir.content.iter_mut().find(|node| {
                     node.full_name() == iter.to_str().unwrap()
                 });
                 
@@ -218,7 +220,7 @@ pub fn get_node(dir: &Node, path: PathBuf) -> Option<&mut Node> {
                         return None;
                     },
                     Some(node) => {
-                        current = Box::new(node).as_mut();
+                        current = node;
                     }
                 }
 

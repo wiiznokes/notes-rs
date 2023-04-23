@@ -1,5 +1,9 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
+
+
 
 use std::path::PathBuf;
 
@@ -52,9 +56,9 @@ impl DirsTree {
 
 
                     match node {
-                        Some(Node::Dir(mut dir)) => dir.full_name_cached = value,
+                        Some(Node::Dir(ref mut dir)) => dir.full_name_cached = value,
 
-                        Some(Node::File(mut file)) => file.full_name_cached = value,
+                        Some(Node::File(ref mut file)) => file.full_name_cached = value,
                         _ => { }
                     }
                 }
