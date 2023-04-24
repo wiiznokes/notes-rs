@@ -12,6 +12,7 @@ pub struct DirNode {
     pub expanded: bool,
     pub full_name: String,
     pub full_name_cached: String,
+    pub edit_active: bool,
     pub content: Vec<Node>,
 }
 
@@ -26,6 +27,7 @@ pub struct FileNode {
     pub extension: String,
     pub full_name: String,
     pub full_name_cached: String,
+    pub edit_active: bool,
     pub path: PathBuf,
 }
 
@@ -136,6 +138,8 @@ pub fn create_dir_node(path: &Path) -> Result<DirNode, String> {
                             .to_string_lossy()
                             .into_owned(),
                         path: entry_path_owned,
+                        edit_active: false,
+                        
                     })
                 };
 
@@ -157,6 +161,7 @@ pub fn create_dir_node(path: &Path) -> Result<DirNode, String> {
         full_name: dir_name.clone(),
         full_name_cached: dir_name,
         content,
+        edit_active: false
     })
 }
 
