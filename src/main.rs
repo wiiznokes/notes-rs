@@ -12,10 +12,9 @@ use app::{Notes};
 mod actions;
 mod dirs_tree;
 mod onglets;
-mod theme;
 
 mod file_system;
-
+mod icons;
 
 pub fn main() -> color_eyre::Result<()> {
 

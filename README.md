@@ -98,3 +98,12 @@ struct file_node {
     full_name: String,
     path: Path
 }
+
+
+
+## icons
+- https://icons.getbootstrap.com/
+- https://icons.getbootstrap.com/icons/file-earmark/
+- https://icons.getbootstrap.com/icons/folder/
+- https://icons.getbootstrap.com/icons/chevron-down/
+- https://icons.getbootstrap.com/icons/chevron-right/   

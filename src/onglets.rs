@@ -1,70 +1,53 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 
+use iced::window::icon;
+use iced::{Command, Alignment};
+use iced::{Element, Length};
 
-use iced::Length;
-use iced::{Command};
-
-use crate::theme::widget::{Element, Text, Container};
+use iced::widget::{column, row, Button, Column, Container, Text, TextInput};
 
 use crate::app::{self};
 
-use crate::theme:: {self};
-
-
+use crate::icons;
 
 use iced::alignment;
 
-
-
-
 #[derive(Clone, Debug)]
 pub struct Onglets {
-
-
 }
-
 
 #[derive(Clone, Debug)]
 pub enum Message {
-    Close
+    Close,
 }
 
-
-
-
 impl Onglets {
+    pub fn new() -> Onglets {
+        Onglets {
+        }
+    }
 
-
-    pub fn new () -> Onglets {
-
-        Onglets {  }
+    pub fn update(&mut self, message: Message) -> iced::Command<app::Message> {
+        match message {
+            
+            Message::Close => todo!(),
+        }
 
     }
 
-
-    pub fn update(&mut self, _message: Message) -> iced::Command<app::Message> {
-
-        let ret = Command::none();
-        {}
-        ret
-    }
-
-   
-
-    pub fn view(&self, notes: &app::Notes) -> Element<app::Message, iced::Renderer<theme::Theme>> {
-
-
-        let onglets = Text::new(format!("{}", notes.test))
-            .height(Length::Fill)
+    pub fn view(&self, notes: &app::Notes) -> Element<app::Message> {
+        let text = Text::new("hello")
             .width(Length::Fill)
+            .height(Length::Fill)
             .horizontal_alignment(alignment::Horizontal::Center)
             .vertical_alignment(alignment::Vertical::Center);
-       
 
 
-        let content = Container::new(onglets)
-            .style(theme::Container::Bordered)
+        let content = Container::new(text)
+            .style(iced::theme::Container::Box)
             .height(Length::Fill)
             .width(Length::Fill);
 
@@ -73,6 +56,5 @@ impl Onglets {
             .height(Length::Fill)
             .width(Length::Fill)
             .into()
-        
     }
 }
