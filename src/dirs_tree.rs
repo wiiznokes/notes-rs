@@ -71,13 +71,14 @@ impl DirsTree {
                 }
 
                 Message::Expand(path) => {
+
                     let node = get_node(root_node, path);
 
                     match node {
                         Some(Node::Dir(ref mut dir)) => {
-
                             dir.expanded = !dir.expanded;
                         }
+                        
                         _ => { panic!("not a dir when expand"); }
                     }
                 },

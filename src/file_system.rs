@@ -167,6 +167,8 @@ pub fn create_dir_node(path: &Path) -> Result<DirNode, String> {
 
 pub fn get_node(dir: &mut Node, path: PathBuf) -> Option<&mut Node> {
     let mut current = dir;
+
+    println!("get node: path = {}", path.clone().display());
     
     for iter in path.iter().skip(1) {
         match current {

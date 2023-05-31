@@ -3,18 +3,6 @@
 	"tasks": [
 		{
 			"type": "cargo",
-			"label": "build",
-			"command": "build",
-			"args": [
-				
-			],
-			"problemMatcher": [
-				"$rustc"
-			],
-			"group": "build"
-		},
-		{
-			"type": "cargo",
 			"label": "clippy",
 			"command": "clippy",
 			"problemMatcher": [
@@ -30,6 +18,16 @@
 				"$rustc"
 			],
 			"group": "clean"
+		},
+		{
+			"type": "cargo",
+			"command": "build",
+			"problemMatcher": [
+				"$rustc",
+				"$rust-panic"
+			],
+			"group": "build",
+			"label": "rust: cargo build"
 		}
 	]
 }
