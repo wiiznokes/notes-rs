@@ -11,7 +11,7 @@ use iced::{Application, Command};
 
 use crate::actions::{self, Actions};
 use crate::dirs_tree::{self, DirsTree};
-use crate::file_system;
+use crate::{file_system, watcher};
 use crate::onglets::{self, Onglets};
 
 use iced::widget::{Column, Row};
@@ -108,13 +108,23 @@ impl Application for Notes {
     }
 }
 
+
+use std::path;
+
 async fn load(path_str: String) -> Result<Node, String> {
     let path = Path::new(&path_str);
+
+
+ 
 
     match file_system::create_dir_node(path) {
         Ok(dir_node) => {
             //println!("{:?}", dir_node);
-
+            
+            
+            
+            watcher::start_watch(path).unwrap();
+            
             Ok(Node::Dir(dir_node))
         }
         Err(error) => Err(error),

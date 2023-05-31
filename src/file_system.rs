@@ -6,6 +6,7 @@
 use std::fs;
 use std::path::{Iter, Path, PathBuf};
 
+
 #[derive(Debug, Clone)]
 pub struct DirNode {
     pub path: PathBuf,
@@ -157,7 +158,7 @@ pub fn create_dir_node(path: &Path) -> Result<DirNode, String> {
 
     Ok(DirNode {
         path: path.to_path_buf(),
-        expanded: false,
+        expanded: true,
         full_name: dir_name.clone(),
         full_name_cached: dir_name,
         content,
@@ -165,34 +166,82 @@ pub fn create_dir_node(path: &Path) -> Result<DirNode, String> {
     })
 }
 
-pub fn get_node(dir: &mut Node, path: PathBuf) -> Option<&mut Node> {
-    let mut current = dir;
+
+/// assumptions
+/// - path is absolute
+/// - dir is a node of type Dir
+pub fn get_node(root_dir: &mut Node, path: PathBuf) -> Option<&mut Node> {
+
 
     println!("get node: path = {}", path.clone().display());
+
+
+    let root_dir_path = root_dir.path();
+    let mut path_iter = path.iter();
+
+    for root_part in root_dir_path.iter() {
+        let path_part = path_iter.next()
+            .expect("path is not in root path");
+
+        if (root_part != path_part) {
+            panic!("path is not in root path");
+        }
+        
+    }
     
-    for iter in path.iter().skip(1) {
-        match current {
-            Node::File(_) => {
-                return None;
-            }
 
-            Node::Dir(dir) => {
-                let next_node: Option<&mut Node> = dir
-                    .content
-                    .iter_mut()
-                    .find(|node| node.full_name() == iter.to_str().unwrap());
+  
+    let mut path_part_opt = path_iter.next();
+ 
+    if (path_part_opt.is_none()) {
+        println!("it's the root node !");
+        return Some(root_dir);
+    }
 
-                match next_node {
-                    None => {
+    
+    let mut current = root_dir;
+
+
+    while (path_part_opt.is_some()) {
+        if let Some(path_part) = path_part_opt {
+            match current {
+                Node::File(file) => {
+                    println!("file: {}", file.full_name);
+
+                    if (path_part == file.path && path_iter.next().is_none()) {
+                        println!("it's a file");
+                        return Some(current);
+                    } else {
+                        println!("not found in file");
                         return None;
                     }
-                    Some(node) => {
-                        current = node;
+    
+                }
+
+                Node::Dir(dir) => {
+                    println!("dir: {}", dir.full_name);
+
+                    let next_node: Option<&mut Node> = dir
+                        .content
+                        .iter_mut()
+                        .find(|node| node.full_name() == path_part.to_str().unwrap());
+
+                    match next_node {
+                        None => {
+                            println!("not found in dir");
+                            return None;
+                        }
+                        Some(node) => {
+                            current = node;
+                        }
                     }
                 }
             }
+            path_part_opt = path_iter.next();
         }
+       
     }
 
     Some(current)
 }
+

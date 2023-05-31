@@ -10,3 +10,4 @@ rust-version = "1.65.0"
 [dependencies]
 iced = "0.9"
 color-eyre = "0.6.2"
+inotify = "0.10.0"
