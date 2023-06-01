@@ -11,7 +11,7 @@ use iced::{Application, Command};
 
 use crate::actions::{self, Actions};
 use crate::dirs_tree::{self, DirsTree};
-use crate::{file_system, watcher};
+use crate::{files_explorer, watcher};
 use crate::onglets::{self, Onglets};
 
 use iced::widget::{Column, Row};
@@ -19,7 +19,7 @@ use iced::Element;
 
 use iced::widget::Space;
 
-use crate::file_system::{DirNode, FileNode, Node};
+use crate::files_explorer::{DirNode, FileNode, Node};
 
 pub struct Notes {
     pub actions: Actions,
@@ -117,7 +117,7 @@ async fn load(path_str: String) -> Result<Node, String> {
 
  
 
-    match file_system::create_dir_node(path) {
+    match files_explorer::create_dir_node(path) {
         Ok(dir_node) => {
             //println!("{:?}", dir_node);
             

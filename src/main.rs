@@ -13,7 +13,7 @@ mod actions;
 mod dirs_tree;
 mod onglets;
 
-mod file_system;
+mod files_explorer;
 mod icons;
 mod watcher;
 
