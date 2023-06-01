@@ -4,9 +4,10 @@
 #![allow(unused_parens)]
 
 use std::env;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use iced::executor;
+use iced::futures::channel::mpsc::Sender;
+use iced::{executor, Subscription};
 use iced::{Application, Command};
 
 use crate::actions::{self, Actions};
@@ -27,6 +28,8 @@ pub struct Notes {
     pub onglets: Onglets,
 
     pub file_system: Option<Node>,
+
+    sender: Option<Sender<watcher::Message>>,
 }
 
 #[derive(Debug, Clone)]
@@ -35,6 +38,7 @@ pub enum Message {
     Actions(actions::Message),
     DirsTree(dirs_tree::Message),
     Onglets(onglets::Message),
+    Watcher(watcher::Message)
 }
 
 impl Application for Notes {
@@ -49,6 +53,7 @@ impl Application for Notes {
             dirs_tree: DirsTree::new(),
             onglets: Onglets::new(),
             file_system: None,
+            sender: None
         };
 
         let mut args = env::args();
@@ -68,6 +73,11 @@ impl Application for Notes {
 
     fn title(&self) -> String {
         String::from("Notes")
+    }
+
+    fn subscription(&self) -> Subscription<Message> {
+        println!("subscription (in app)");
+        watcher::start_watch().map(Message::Watcher)
     }
 
     fn update(&mut self, message: Message) -> Command<Self::Message> {
@@ -92,6 +102,22 @@ impl Application for Notes {
                 self.dirs_tree.update(sub_message, &mut self.file_system)
             }
             Message::Onglets(sub_message) => self.onglets.update(sub_message),
+
+            Message::Watcher(sub_msg) => {
+                println!("receive msg from watch: {:?}", sub_msg);
+
+                match sub_msg {
+                    watcher::Message::Connected(mut sender) => {
+                        let msg_to_send = watcher::Message::Watch(Path::new("commence le watchage").to_path_buf());
+                        sender.try_send(msg_to_send)
+                            .expect("error tring to send to watcher");
+                        
+                        self.sender = Some(sender);
+                    }
+                    _ => {}
+                }
+                Command::none()
+            }
         }
     }
 
@@ -112,7 +138,7 @@ impl Application for Notes {
 use std::path;
 
 async fn load(path_str: String) -> Result<Node, String> {
-    let path = Path::new(&path_str);
+    let path: &Path = Path::new(&path_str);
 
 
  
@@ -121,9 +147,8 @@ async fn load(path_str: String) -> Result<Node, String> {
         Ok(dir_node) => {
             //println!("{:?}", dir_node);
             
+            let path_buf = path.to_path_buf();
             
-            
-            watcher::start_watch(path).unwrap();
             
             Ok(Node::Dir(dir_node))
         }

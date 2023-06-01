@@ -17,11 +17,7 @@ pub struct DirNode {
     pub content: Vec<Node>,
 }
 
-#[derive(Debug, Clone)]
-pub enum Node {
-    Dir(DirNode),
-    File(FileNode),
-}
+
 
 #[derive(Debug, Clone)]
 pub struct FileNode {
@@ -30,6 +26,12 @@ pub struct FileNode {
     pub full_name_cached: String,
     pub edit_active: bool,
     pub path: PathBuf,
+}
+
+#[derive(Debug, Clone)]
+pub enum Node {
+    Dir(DirNode),
+    File(FileNode),
 }
 
 impl Node {

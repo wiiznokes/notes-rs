@@ -19,6 +19,8 @@ mod watcher;
 
 pub fn main() -> color_eyre::Result<()> {
 
+    //env::set_var("RUST_BACKTRACE", "full");
+
     let args = env::args();
 
    
