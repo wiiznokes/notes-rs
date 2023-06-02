@@ -77,7 +77,7 @@ impl Application for Notes {
 
     fn subscription(&self) -> Subscription<Message> {
         println!("subscription (in app)");
-        watcher::start_watch().map(Message::Watcher)
+        watcher::start_watcher().map(Message::Watcher)
     }
 
     fn update(&mut self, message: Message) -> Command<Self::Message> {
