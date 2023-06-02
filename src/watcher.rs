@@ -41,12 +41,10 @@ pub enum Message {
 
 #[derive(Debug)]
 #[allow(clippy::large_enum_variant)]
-enum State<'a> {
-    Starting,
-    Waiting(&'a mpsc::Receiver<Message>),
-    Watching(&'a  mpsc::Receiver<Message>, PathBuf),
+enum State {
+    Waiting,
+    Watching(PathBuf),
 }
-
 pub fn start_watcher() -> Subscription<Message> {
     struct Connect;
 
@@ -54,30 +52,26 @@ pub fn start_watcher() -> Subscription<Message> {
         std::any::TypeId::of::<Connect>(),
         100,
         |mut output| async move {
-            let mut state = State::Starting;
+
+
+            let (sender, mut receiver) = mpsc::channel(100);
+
+            output.send(Message::Waiting(sender))
+                .await
+                .expect("error: can't send msg to app");
+
+            let mut state = State::Waiting;
 
             loop {
                 match &mut state {
-                    State::Starting => {
-                        println!("Start");
-
-                        let (sender, receiver) = mpsc::channel(100);
-
-                        output.send(Message::Waiting(sender))
-                            .await
-                            .expect("error: can't send msg to app");
-
-
-                        state = State::Waiting(&receiver);
-                    }
-
-                    State::Waiting(receiver) => {
+            
+                    State::Waiting => {
 
                         let input = receiver.select_next_some().await;
 
                         match input {
                             Message::Watch(path) => {
-                                state = State::Watching(receiver, path);
+                                state = State::Watching(path);
                             },
                             Message::Stop => todo!(),
 
@@ -86,10 +80,12 @@ pub fn start_watcher() -> Subscription<Message> {
                             _ => panic!("should not append")
                         }
 
+
                     }
 
-                    State::Watching(receiver, path) => {
-
+                    State::Watching(path) => {
+                        
+                        /*
                         let mut inotify = Inotify::init().expect("Failed to initialize inotify");
 
                         inotify
@@ -103,6 +99,8 @@ pub fn start_watcher() -> Subscription<Message> {
                             .expect("Failed to add inotify watch");
 
                         let mut buffer = [0u8; 4096];
+
+                        
                         
                         let handle = thread::spawn(async move || {
 
@@ -146,15 +144,19 @@ pub fn start_watcher() -> Subscription<Message> {
 
                         });
                         
+                        */
 
+                        println!("before receiver.select_next_some().await");
                         
                         let input = receiver.select_next_some().await;
 
-                        handle.join();
+                        println!("after receiver.select_next_some().await {:?}", input);
+
+                        //handle.join();
 
                         match input {
                             Message::Watch(path) => {
-                                state = State::Watching(receiver, path);
+                                state = State::Watching(path);
                             },
                             Message::Stop => todo!(),
 
@@ -180,6 +182,7 @@ pub fn start_watcher() -> Subscription<Message> {
 
 
 
+                    /*
                     
 
                     State::Connected(re) => {
@@ -235,6 +238,7 @@ pub fn start_watcher() -> Subscription<Message> {
 
                         thread::sleep(Duration::from_secs(1));
                     }
+                    */
                 }
             }
         },
