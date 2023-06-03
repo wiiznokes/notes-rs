@@ -159,7 +159,7 @@ use std::path;
 async fn load(path: PathBuf) -> Result<Node, String> {
 
 
-    match files_explorer::create_node(path) {
+    match files_explorer::init_explorer(path) {
         Ok(dir_node) => {
             //println!("{:?}", dir_node);
             
