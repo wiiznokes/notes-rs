@@ -17,6 +17,8 @@ pub struct Dir {
     pub name: String,
     pub name_cached: String,
     pub is_name_is_edited: bool,
+
+    has_been_expanded: bool
 }
 
 impl Default for Dir {
@@ -27,7 +29,8 @@ impl Default for Dir {
             name: String::from(""),
             name_cached: String::from(""),
             content: Vec::new(),
-            is_name_is_edited: false
+            is_name_is_edited: false,
+            has_been_expanded: false
         }
     }
 }
@@ -80,7 +83,7 @@ impl Node {
         }
     }
 
-    pub fn full_name(&self) -> String {
+    pub fn name(&self) -> String {
         match &self {
             Node::Dir(dir) => dir.name.clone(),
             Node::File(file) => file.name.clone(),
@@ -110,7 +113,45 @@ pub fn create_node(path: PathBuf) -> Result<Dir, String> {
     };
     
     let mut content = Vec::new();
-    let dir_entries = match fs::read_dir(&path) {
+
+    if let Err(e) = fill_dir_content(&mut content, &path) {
+        return Err(e);
+    }
+
+
+    Ok(
+        Dir {
+            path: path,
+            is_expanded: true,
+            content: content,
+
+            name: dir_name,
+            has_been_expanded: true,
+            ..Default::default()
+        }
+    )
+
+    
+}
+
+
+
+pub fn expand_dir(dir: &mut Dir) -> Result<(), String> {
+    dir.is_expanded = true;
+
+    if dir.has_been_expanded {
+        return Ok(());
+    }
+
+  
+    return fill_dir_content(&mut dir.content, &dir.path.clone());
+    
+}
+
+
+fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), String> {
+
+    let dir_entries = match fs::read_dir(path) {
         Ok(entries) => entries,
         Err(error) => {
             return Err(format!(
@@ -169,7 +210,11 @@ pub fn create_node(path: PathBuf) -> Result<Dir, String> {
                     })
                 };
 
-                insert_node_sorted(node, &mut content);
+                match get_index_sorted(node.name(), node.is_dir(), content) {
+                    Ok(index) => return Err(format!("can't insert {} in {}. name already exist in content", node.name(), entry_path.to_string_lossy())),
+                    Err(index) => content.insert(index, node),
+                }
+
             }
             Err(error) => {
                 return Err(format!(
@@ -181,20 +226,8 @@ pub fn create_node(path: PathBuf) -> Result<Dir, String> {
         }
     }
 
-    Ok(
-        Dir {
-            path: path,
-            is_expanded: true,
-            content: content,
-
-            name: dir_name,
-            ..Default::default()
-        }
-    )
-
-    
+    return Ok(());
 }
-
 
 
 // Vérifie si le chemin est un répertoire existant
@@ -215,36 +248,32 @@ pub fn is_dir_exist(path: &PathBuf) -> Result<(), String> {
     }
 }
 
-/// Insert node in content with this rules:
+
+/// If the value is found then [`Result::Ok`] is returned, containing the index of the matching element. 
+/// If the value is not found then [`Result::Err`] is returned, 
+/// containing the index where a matching element could be inserted while maintaining sorted order
+/// 
+/// The sortage follow this rules:
 /// - all directory before files
 /// - alpha numeric (ASCII), with case insensitive (a = A)
-/// condition: content must be sorted with this rules before using this function
-fn insert_node_sorted(node: Node, content: &mut Vec<Node>) {
+/// 
+/// Condition: content must be sorted with this rules before using this function
+#[must_use]
+fn get_index_sorted(name: String, is_dir: bool, content: &Vec<Node>) -> Result<usize, usize> {
 
     // notice we use negation when node is a dir
     // because 0 will have a smaller index than 1
-    let first_key = !node.is_dir();
-
+    //
     // we lower all letter because 'A' < '_' < 'a' in ASCII, and
     // I prefer having '.' and '_' files on top
-    let second_key = node.full_name().to_lowercase();
 
     // we use a third key in case of egality, because Linux is sensitive (a != A) 
-    let third_key = node.full_name();
-    
-    let insert_index = content.binary_search_by_key(
-        &(first_key, second_key, third_key), 
+    content.binary_search_by_key(
+        &(!is_dir, name.to_lowercase(), name), 
     |n| {
-        (!n.is_dir(), n.full_name().to_lowercase(), node.full_name())
-    });
-
-    match insert_index {
-        Ok(idx) => content.insert(idx, node),
-        Err(idx) => content.insert(idx, node),
-    }
+        (!n.is_dir(), n.name().to_lowercase(), n.name())
+    })
 }
-
-
 
 
 
@@ -307,7 +336,7 @@ pub fn get_node(root_dir: &mut Node, path: PathBuf) -> Option<&mut Node> {
                     let next_node: Option<&mut Node> = dir
                         .content
                         .iter_mut()
-                        .find(|node| node.full_name() == path_part.to_str().unwrap());
+                        .find(|node| node.name() == path_part.to_str().unwrap());
 
                     match next_node {
                         None => {
@@ -328,3 +357,88 @@ pub fn get_node(root_dir: &mut Node, path: PathBuf) -> Option<&mut Node> {
     Some(current)
 }
 
+
+
+
+pub fn search_node_by_path(root_node: & Node, search_path: PathBuf, is_dir: bool) -> Result<& Node, String> {
+
+    if !root_node.is_dir() {
+        return Err(format!("tring to search a node: {} with a file", search_path.to_string_lossy()));
+    }
+
+    let root_dir_path = root_node.path();
+    let mut search_path_iter = search_path.iter();
+
+    // make sure /a/b/c/d is in /a/b/c
+    for root_part in root_dir_path.iter() {
+        let search_path_part = match search_path_iter.next() {
+            Some(path) => path,
+            None => return Err(format!("path: {} is not contain in root path {}", search_path.to_string_lossy(), root_dir_path.to_string_lossy())),
+        };
+
+        if (root_part != search_path_part) {
+            return Err(format!("path: {} is not contain in root path {}", search_path.to_string_lossy(), root_dir_path.to_string_lossy()))
+        }
+        
+    }
+    
+
+  
+    let mut search_path_part_opt = search_path_iter.next();
+    
+    let mut current_node = root_node;
+
+    while let Some(search_path_part) = search_path_part_opt {
+        match current_node {
+            Node::Dir(dir) => {
+
+                // pas forcement un dir!
+                get_index_sorted(search_path_part, true,)
+            },
+            Node::File(_) => todo!(),
+        }
+    }
+
+    while (search_path_part_opt.is_some()) {
+        if let Some(path_part) = path_part_opt {
+            match current_node {
+                Node::File(file) => {
+                    println!("file: {}", file.name);
+
+                    if (path_part == file.path && path_iter.next().is_none()) {
+                        println!("it's a file");
+                        return Some(current_node);
+                    } else {
+                        println!("not found in file");
+                        return None;
+                    }
+    
+                }
+
+                Node::Dir(dir) => {
+                    println!("dir: {}", dir.name);
+
+                    let next_node: Option<&mut Node> = dir
+                        .content
+                        .iter_mut()
+                        .find(|node| node.name() == path_part.to_str().unwrap());
+
+                    match next_node {
+                        None => {
+                            println!("not found in dir");
+                            return None;
+                        }
+                        Some(node) => {
+                            current_node = node;
+                        }
+                    }
+                }
+            }
+            path_part_opt = path_iter.next();
+        }
+       
+    }
+
+    Ok(current_node)
+
+}

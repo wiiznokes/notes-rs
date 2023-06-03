@@ -55,6 +55,9 @@ fn expand_dir() {
 fn unexpand_dir()
 
 
+On pourrait recherche un node avec son path, dans le vec, 
+avec ses caracteristiques
 
+mais si on veut supprimer un elements, que ce passe t'il ?
 
 
