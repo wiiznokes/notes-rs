@@ -34,6 +34,9 @@ pub enum Node {
     File(FileNode),
 }
 
+
+
+
 impl Node {
     pub fn is_dir(&self) -> bool {
         match &self {
@@ -55,35 +58,66 @@ impl Node {
             Node::File(file) => file.full_name.clone(),
         }
     }
+
+    /// Construct a node of type Dir.
+    pub fn init(root_path: PathBuf) -> Result<Node, String> {
+
+        if let Err(e) = is_dir_exist(&root_path) {
+            panic!("{e}");
+        }
+
+        
+        todo!()
+    }
 }
 
+
+
+
+
+
 // Vérifie si le chemin est un répertoire existant
-pub fn is_dir_exist(path: &Path) -> Result<(), String> {
+pub fn is_dir_exist(path: &PathBuf) -> Result<(), String> {
     match fs::metadata(path) {
         Ok(metadata) => {
             if metadata.is_dir() {
                 Ok(())
             } else {
-                Err(format!("{} n'est pas un répertoire.", path.display()))
+                Err(format!("error: {} n'est pas un répertoire.", path.display()))
             }
         }
         Err(error) => Err(format!(
-            "Erreur lors de la lecture de {}: {}",
+            "error: can't get metadata of {}: {}",
             path.display(),
             error
         )),
     }
 }
 
-/// Si l'élément est présent dans le tableau, la méthode retourne l'index de l'élément.
-/// Sinon, elle retourne l'index où l'élément pourrait être inséré pour maintenir l'ordre de tri.
+/// Insert node in content with this rules:
+/// - all directory before files
+/// - alpha numeric (ASCII), with case insensitive (a = A)
+/// condition: content must be sorted with this rules before using this function
 pub fn insert_node_sorted(node: Node, content: &mut Vec<Node>) {
-    let is_dir = node.is_dir();
-    let idx = content.binary_search_by_key(&(!is_dir, node.full_name()), |n| {
-        (!n.is_dir(), n.full_name())
+
+    // notice we use negation when node is a dir
+    // because 0 will have a smaller index than 1
+    let first_key = !node.is_dir();
+
+    // we lower all letter because 'A' < '_' < 'a' in ASCII, and
+    // I prefer having '.' and '_' files on top
+    let second_key = node.full_name().to_lowercase();
+
+    // we use a third key in case of egality, because Linux is sensitive (a != A) 
+    let third_key = node.full_name();
+    
+    let insert_index = content.binary_search_by_key(
+        &(first_key, second_key, third_key), 
+    |n| {
+        (!n.is_dir(), n.full_name().to_lowercase(), node.full_name())
     });
 
-    match idx {
+    match insert_index {
         Ok(idx) => content.insert(idx, node),
         Err(idx) => content.insert(idx, node),
     }
@@ -91,7 +125,7 @@ pub fn insert_node_sorted(node: Node, content: &mut Vec<Node>) {
 
 // Fonction qui crée une structure DirNode remplie avec les données du répertoire spécifié
 pub fn create_dir_node(path: &Path) -> Result<DirNode, String> {
-    is_dir_exist(path)?;
+    is_dir_exist(&path.clone().to_path_buf())?;
 
     let dir_name = path
         .file_name()

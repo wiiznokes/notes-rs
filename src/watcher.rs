@@ -17,6 +17,8 @@ use futures::stream::StreamExt;
 
 use std::fmt;
 
+use tokio::task;
+
 use crate::files_explorer::{DirNode, FileNode, Node};
 
 #[derive(Clone, Debug)]
@@ -85,12 +87,12 @@ pub fn start_watcher() -> Subscription<Message> {
 
                     State::Watching(path) => {
                         
-                        /*
+                        
                         let mut inotify = Inotify::init().expect("Failed to initialize inotify");
 
                         inotify
                             .add_watch(
-                                path,
+                                path.clone(),
                                 WatchMask::MODIFY
                                     | WatchMask::CREATE
                                     | WatchMask::DELETE
@@ -102,7 +104,7 @@ pub fn start_watcher() -> Subscription<Message> {
 
                         
                         
-                        let handle = thread::spawn(async move || {
+                        let handle = thread::spawn( move || {
 
                             loop {
                                 let events = inotify
@@ -114,9 +116,8 @@ pub fn start_watcher() -> Subscription<Message> {
                                     if event.mask.contains(EventMask::CREATE) {
                                         if event.mask.contains(EventMask::ISDIR) {
                                             println!("Directory created: {:?}", event.name);
-                                            output.send(Message::CreateDir())
-                                                .await
-                                                .expect("error: can't send msg to app");
+                                            //output.send(Message::CreateDir())
+                                                ;
                                         } else {
                                             println!("File created: {:?}", event.name);
                                         }
@@ -144,15 +145,15 @@ pub fn start_watcher() -> Subscription<Message> {
 
                         });
                         
-                        */
+                        
 
-                        println!("before receiver.select_next_some().await");
+                        println!("before receiver.select_next_some().await, {}", path.clone().to_string_lossy());
                         
                         let input = receiver.select_next_some().await;
 
                         println!("after receiver.select_next_some().await {:?}", input);
 
-                        //handle.join();
+                        handle.join();
 
                         match input {
                             Message::Watch(path) => {
@@ -166,79 +167,6 @@ pub fn start_watcher() -> Subscription<Message> {
                         }
                     }
                     
-
-                    // state: Start, Wait(receiver), Watching(receiver, path)
-
-                    // utiliser le receiver pour
-                    // - start le process, avec un path
-                    // - stop le watch
-                    //
-                    // utiliser l'output pour envoyer des message, quand inotify est notifier
-                    // si state = Watching et que un nouveau path est envoyé.
-                    // -> join le watch
-                    // -> remove le watch
-                    // -> change le state en Watching(avec le new path)
-                    // -> faire un tour de boucle
-
-
-
-                    /*
-                    
-
-                    State::Connected(re) => {
-                        let input = re.select_next_some().await;
-
-                        let mut inotify = Inotify::init().expect("Failed to initialize inotify");
-
-                        inotify
-                            .add_watch(
-                                "/home/lenaic/Documents/notes-rs/aaa_test/",
-                                WatchMask::MODIFY
-                                    | WatchMask::CREATE
-                                    | WatchMask::DELETE
-                                    | WatchMask::DELETE_SELF,
-                            )
-                            .expect("Failed to add inotify watch");
-
-                        let mut buffer = [0u8; 4096];
-                        let events = inotify
-                            .read_events_blocking(&mut buffer)
-                            .expect("Failed to read inotify events");
-
-
-                        for event in events {
-                            if event.mask.contains(EventMask::CREATE) {
-                                if event.mask.contains(EventMask::ISDIR) {
-                                    println!("Directory created: {:?}", event.name);
-                                } else {
-                                    println!("File created: {:?}", event.name);
-                                }
-                            } else if event.mask.contains(EventMask::DELETE) {
-                                if event.mask.contains(EventMask::ISDIR) {
-                                    println!("Directory deleted: {:?}", event.name);
-                                } else {
-                                    println!("File deleted: {:?}", event.name);
-                                }
-                            } else if event.mask.contains(EventMask::DELETE_SELF) {
-                                if event.mask.contains(EventMask::ISDIR) {
-                                    println!("Directory self deleted: {:?}", event.name);
-                                } else {
-                                    println!("File self deleted: {:?}", event.name);
-                                }
-                            } else if event.mask.contains(EventMask::MODIFY) {
-                                if event.mask.contains(EventMask::ISDIR) {
-                                    println!("Directory modified: {:?}", event.name);
-                                } else {
-                                    println!("File modified: {:?}", event.name);
-                                }
-                            }
-                        }
-
-                        println!("Receive msg from app: {:?}", input);
-
-                        thread::sleep(Duration::from_secs(1));
-                    }
-                    */
                 }
             }
         },
