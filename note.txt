@@ -42,10 +42,19 @@ impl From<PathBuf> for Node {
 
     /// Converts a [`PathBuf`] into a [`Node`]
     #[inline]
-    fn from(p: PathBuf) -> PathBuf {
+    fn from_dir_path(p: PathBuf) -> PathBuf {
 
     }
 }
+
+fn expand_dir() {
+
+    // 
+}
+
+fn unexpand_dir()
+
+
 
 
 

@@ -20,7 +20,7 @@ use iced::Element;
 
 use iced::widget::Space;
 
-use crate::files_explorer::{DirNode, FileNode, Node};
+use crate::files_explorer::{Dir, File, Node};
 
 pub struct Notes {
     root_path: Option<PathBuf>,
@@ -158,12 +158,9 @@ use std::path;
 
 async fn load(path: PathBuf) -> Result<Node, String> {
 
-    match files_explorer::create_dir_node(&path) {
+    match files_explorer::create_node(path) {
         Ok(dir_node) => {
             //println!("{:?}", dir_node);
-            
-            let path_buf = path.to_path_buf();
-            
             
             Ok(Node::Dir(dir_node))
         }

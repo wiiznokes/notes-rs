@@ -3,35 +3,63 @@
 #![allow(unused_imports)]
 #![allow(unused_parens)]
 
+use std::ffi::OsStr;
 use std::fs;
 use std::path::{Iter, Path, PathBuf};
 
 
 #[derive(Debug, Clone)]
-pub struct DirNode {
+pub struct Dir {
     pub path: PathBuf,
-    pub expanded: bool,
-    pub full_name: String,
-    pub full_name_cached: String,
-    pub edit_active: bool,
+    pub is_expanded: bool,
     pub content: Vec<Node>,
+
+    pub name: String,
+    pub name_cached: String,
+    pub is_name_is_edited: bool,
+}
+
+impl Default for Dir {
+    fn default() -> Self { 
+        Dir {
+            path: PathBuf::from(""),
+            is_expanded: false,
+            name: String::from(""),
+            name_cached: String::from(""),
+            content: Vec::new(),
+            is_name_is_edited: false
+        }
+    }
 }
 
 
 
 #[derive(Debug, Clone)]
-pub struct FileNode {
-    pub extension: String,
-    pub full_name: String,
-    pub full_name_cached: String,
-    pub edit_active: bool,
+pub struct File {
     pub path: PathBuf,
+    pub extension: String,
+
+    pub name: String,
+    pub name_cached: String,
+    pub is_name_is_edited: bool,
+}
+
+impl Default for File {
+    fn default() -> Self { 
+        File {
+            path: PathBuf::from(""),
+            extension: String::from(""),
+            name: String::from(""),
+            name_cached: String::from(""),
+            is_name_is_edited: false
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub enum Node {
-    Dir(DirNode),
-    File(FileNode),
+    Dir(Dir),
+    File(File),
 }
 
 
@@ -54,25 +82,118 @@ impl Node {
 
     pub fn full_name(&self) -> String {
         match &self {
-            Node::Dir(dir) => dir.full_name.clone(),
-            Node::File(file) => file.full_name.clone(),
+            Node::Dir(dir) => dir.name.clone(),
+            Node::File(file) => file.name.clone(),
         }
     }
 
-    /// Construct a node of type Dir.
-    pub fn init(root_path: PathBuf) -> Result<Node, String> {
-
-        if let Err(e) = is_dir_exist(&root_path) {
-            panic!("{e}");
-        }
-
-        
-        todo!()
-    }
 }
 
 
 
+
+/// Construct a node of type Dir from a path
+/// 
+/// Condition: root_path is a dir
+pub fn create_node(path: PathBuf) -> Result<Dir, String> {
+
+    if let Err(e) = is_dir_exist(&path) {
+        return Err(e);
+    }
+
+
+    let dir_name = match path.clone().file_name() {
+        Some(name) => name.to_string_lossy().to_string(),
+        None => {
+            return Err(format!("can't read the name of the path {}", path.to_string_lossy()));
+        }
+    };
+    
+    let mut content = Vec::new();
+    let dir_entries = match fs::read_dir(&path) {
+        Ok(entries) => entries,
+        Err(error) => {
+            return Err(format!(
+                "Erreur lors de la lecture de {}: {}",
+                path.display(),
+                error
+            ))
+        }
+    };
+
+
+    for entry_opt in dir_entries {
+        match entry_opt {
+            Ok(entry) => {
+                let entry_path = entry.path();
+
+                if !entry_path.is_dir() && !entry_path.is_file() {
+                    println!("spécial file or dir have been passed: {}", entry_path.display());
+                    continue;
+                }
+
+
+                let node = if entry_path.is_dir() {
+
+
+                    let entry_name = match entry_path.clone().file_name() {
+                        Some(name) => name.to_string_lossy().to_string(),
+                        None => {
+                            return Err(format!("can't read the name of the path {}", entry_path.to_string_lossy()));
+                        }
+                    };
+
+                    Node::Dir(Dir {
+                        path: entry_path,
+                        name: entry_name,
+                        ..Default::default()
+                    })
+
+                } else {
+                    
+                    let entry_extension = entry_path.clone().extension()
+                        .unwrap_or(OsStr::new("")).to_string_lossy().to_string();
+
+                    let entry_name = match entry_path.clone().file_name() {
+                        Some(name) => name.to_string_lossy().to_string(),
+                        None => {
+                            return Err(format!("can't read the name of the path {}", entry_path.to_string_lossy()));
+                        }
+                    };
+
+                    Node::File(File {
+                        extension: entry_extension,
+                        name: entry_name,
+                        path: entry_path,
+                        ..Default::default()
+                    })
+                };
+
+                insert_node_sorted(node, &mut content);
+            }
+            Err(error) => {
+                return Err(format!(
+                    "Erreur lors de la lecture du contenu de {}: {}",
+                    path.display(),
+                    error
+                ))
+            }
+        }
+    }
+
+    Ok(
+        Dir {
+            path: path,
+            is_expanded: true,
+            content: content,
+
+            name: dir_name,
+            ..Default::default()
+        }
+    )
+
+    
+}
 
 
 
@@ -98,7 +219,7 @@ pub fn is_dir_exist(path: &PathBuf) -> Result<(), String> {
 /// - all directory before files
 /// - alpha numeric (ASCII), with case insensitive (a = A)
 /// condition: content must be sorted with this rules before using this function
-pub fn insert_node_sorted(node: Node, content: &mut Vec<Node>) {
+fn insert_node_sorted(node: Node, content: &mut Vec<Node>) {
 
     // notice we use negation when node is a dir
     // because 0 will have a smaller index than 1
@@ -123,84 +244,10 @@ pub fn insert_node_sorted(node: Node, content: &mut Vec<Node>) {
     }
 }
 
-// Fonction qui crée une structure DirNode remplie avec les données du répertoire spécifié
-pub fn create_dir_node(path: &Path) -> Result<DirNode, String> {
-    is_dir_exist(&path.clone().to_path_buf())?;
 
-    let dir_name = path
-        .file_name()
-        .unwrap_or_default()
-        .to_string_lossy()
-        .into_owned();
 
-    let mut content = Vec::new();
-    let dir_entries = match fs::read_dir(path) {
-        Ok(entries) => entries,
-        Err(error) => {
-            return Err(format!(
-                "Erreur lors de la lecture de {}: {}",
-                path.display(),
-                error
-            ))
-        }
-    };
 
-    for entry in dir_entries {
-        match entry {
-            Ok(dir_entry) => {
-                let entry_path = dir_entry.path();
 
-                if !entry_path.is_dir() && !entry_path.is_file() {
-                    continue; // Ignore les fichiers spéciaux (par ex. les fichiers "cachés")
-                }
-                let node = if entry_path.is_dir() {
-                    Node::Dir(create_dir_node(&entry_path)?)
-                } else {
-                    let entry_path_owned = entry_path.to_owned();
-
-                    Node::File(FileNode {
-                        extension: entry_path_owned
-                            .extension()
-                            .unwrap_or_default()
-                            .to_string_lossy()
-                            .into_owned(),
-                        full_name: entry_path_owned
-                            .file_name()
-                            .unwrap_or_default()
-                            .to_string_lossy()
-                            .into_owned(),
-                        full_name_cached: entry_path_owned
-                            .file_name()
-                            .unwrap_or_default()
-                            .to_string_lossy()
-                            .into_owned(),
-                        path: entry_path_owned,
-                        edit_active: false,
-                        
-                    })
-                };
-
-                insert_node_sorted(node, &mut content);
-            }
-            Err(error) => {
-                return Err(format!(
-                    "Erreur lors de la lecture du contenu de {}: {}",
-                    path.display(),
-                    error
-                ))
-            }
-        }
-    }
-
-    Ok(DirNode {
-        path: path.to_path_buf(),
-        expanded: false,
-        full_name: dir_name.clone(),
-        full_name_cached: dir_name,
-        content,
-        edit_active: false
-    })
-}
 
 
 /// assumptions
@@ -242,7 +289,7 @@ pub fn get_node(root_dir: &mut Node, path: PathBuf) -> Option<&mut Node> {
         if let Some(path_part) = path_part_opt {
             match current {
                 Node::File(file) => {
-                    println!("file: {}", file.full_name);
+                    println!("file: {}", file.name);
 
                     if (path_part == file.path && path_iter.next().is_none()) {
                         println!("it's a file");
@@ -255,7 +302,7 @@ pub fn get_node(root_dir: &mut Node, path: PathBuf) -> Option<&mut Node> {
                 }
 
                 Node::Dir(dir) => {
-                    println!("dir: {}", dir.full_name);
+                    println!("dir: {}", dir.name);
 
                     let next_node: Option<&mut Node> = dir
                         .content

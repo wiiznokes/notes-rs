@@ -19,7 +19,7 @@ use std::fmt;
 
 use tokio::task;
 
-use crate::files_explorer::{DirNode, FileNode, Node};
+use crate::files_explorer::{Dir, File, Node};
 
 #[derive(Clone, Debug)]
 pub enum Message {
