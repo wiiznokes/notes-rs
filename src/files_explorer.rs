@@ -137,15 +137,18 @@ pub fn create_node(path: PathBuf) -> Result<Dir, String> {
 
 
 pub fn expand_dir(dir: &mut Dir) -> Result<(), String> {
-    dir.is_expanded = true;
+
+   
+    dir.is_expanded = !dir.is_expanded;
 
     if dir.has_been_expanded {
-        return Ok(());
+        Ok(())
+    } else {
+        let res = fill_dir_content(&mut dir.content, &dir.path.clone());
+        dir.has_been_expanded = true;
+        res
     }
 
-  
-    return fill_dir_content(&mut dir.content, &dir.path.clone());
-    
 }
 
 
@@ -211,7 +214,8 @@ fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), Strin
                 };
 
                 match get_index_sorted(node.name(), node.is_dir(), content) {
-                    Ok(index) => return Err(format!("can't insert {} in {}. name already exist in content", node.name(), entry_path.to_string_lossy())),
+                    Ok(index) => return Err(format!("can't insert {} in {}. name already exist in content",
+                    node.name(), node.path().to_string_lossy())),
                     Err(index) => content.insert(index, node),
                 }
 
@@ -360,21 +364,29 @@ pub fn get_node(root_dir: &mut Node, path: PathBuf) -> Option<&mut Node> {
 
 
 
-pub fn search_node_by_path(root_node: & Node, search_path: PathBuf, is_dir: bool) -> Result<& Node, String> {
+pub fn search_node_by_path(root_node: &mut Node, search_path: PathBuf, is_dir: bool) -> Result<&mut Node, String> {
+
+    
 
     if !root_node.is_dir() {
         return Err(format!("tring to search a node: {} with a file", search_path.to_string_lossy()));
     }
 
+
     let root_dir_path = root_node.path();
+
+    let search_path_count = search_path.components().count();
+    let mut iter_index = 0;
     let mut search_path_iter = search_path.iter();
 
     // make sure /a/b/c/d is in /a/b/c
     for root_part in root_dir_path.iter() {
+        
         let search_path_part = match search_path_iter.next() {
             Some(path) => path,
             None => return Err(format!("path: {} is not contain in root path {}", search_path.to_string_lossy(), root_dir_path.to_string_lossy())),
         };
+        iter_index += 1;
 
         if (root_part != search_path_part) {
             return Err(format!("path: {} is not contain in root path {}", search_path.to_string_lossy(), root_dir_path.to_string_lossy()))
@@ -383,62 +395,53 @@ pub fn search_node_by_path(root_node: & Node, search_path: PathBuf, is_dir: bool
     }
     
 
-  
-    let mut search_path_part_opt = search_path_iter.next();
+    
     
     let mut current_node = root_node;
 
-    while let Some(search_path_part) = search_path_part_opt {
+    while let Some(search_path_part) = search_path_iter.next() {
+        iter_index += 1;
+
         match current_node {
             Node::Dir(dir) => {
 
-                // pas forcement un dir!
-                get_index_sorted(search_path_part, true,)
-            },
-            Node::File(_) => todo!(),
-        }
-    }
-
-    while (search_path_part_opt.is_some()) {
-        if let Some(path_part) = path_part_opt {
-            match current_node {
-                Node::File(file) => {
-                    println!("file: {}", file.name);
-
-                    if (path_part == file.path && path_iter.next().is_none()) {
-                        println!("it's a file");
-                        return Some(current_node);
+                let current_search_path_is_dir = if is_dir {
+                    true
+                } else {
+                    if (iter_index == search_path_count) {
+                        false
                     } else {
-                        println!("not found in file");
-                        return None;
+                        true
                     }
-    
-                }
+                };
+                
+                let node_index = match get_index_sorted(search_path_part.to_string_lossy().to_string(), 
+                    current_search_path_is_dir, &dir.content) {
+                    Ok(index) => index,
+                    Err(index) => return Err(format!("{} was not found in content of {}", 
+                        search_path_part.to_string_lossy(), dir.path.to_string_lossy())),
+                };
 
-                Node::Dir(dir) => {
-                    println!("dir: {}", dir.name);
+                current_node = &mut dir.content[node_index];
 
-                    let next_node: Option<&mut Node> = dir
-                        .content
-                        .iter_mut()
-                        .find(|node| node.name() == path_part.to_str().unwrap());
-
-                    match next_node {
-                        None => {
-                            println!("not found in dir");
-                            return None;
-                        }
-                        Some(node) => {
-                            current_node = node;
-                        }
+            },
+            Node::File(file) => {
+                if search_path_part.to_string_lossy() == file.name {
+                    if search_path_iter.next().is_none() {
+                        return Ok(current_node);
+                    } else {
+                        return Err(format!("{} is a file, but it's not the end off the path", 
+                            search_path_part.to_string_lossy()));
                     }
+                } else {
+                    return Err(format!("file {} is not equal to this file {} in {}",
+                        search_path_part.to_string_lossy(), file.name, file.path.to_string_lossy()));
                 }
-            }
-            path_part_opt = path_iter.next();
-        }
-       
+            },
+        };
     }
 
+    // always a dir in this case
     Ok(current_node)
 
 }

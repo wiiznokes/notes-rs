@@ -16,7 +16,7 @@ use iced::widget::{column, row, Button, Column, Container, Row, Space, Text, Tex
 
 use crate::app::{self};
 
-use crate::files_explorer::{get_node, Dir, File, Node};
+use crate::files_explorer::{search_node_by_path, Dir, File, Node, expand_dir};
 
 #[derive(Clone, Debug)]
 pub struct DirsTree {}
@@ -52,8 +52,9 @@ impl DirsTree {
         match root_node_opt {
             Some(root_node) => match message {
                 Message::InputChanged(path, value) => {
+                    /*
 
-                    let node = get_node(root_node, path);
+                    let node = search_node_by_path(root_node, path);
 
                     match node {
                         Some(Node::Dir(ref mut dir)) => {
@@ -68,23 +69,24 @@ impl DirsTree {
                         }
                         _ => { panic!("Aucun node trouvé"); }
                     }
+                     */
                 }
 
                 Message::Expand(path) => {
 
-                    let node = get_node(root_node, path);
+                    let node = search_node_by_path(root_node, path, true).unwrap();
 
-                    match node {
-                        Some(Node::Dir(ref mut dir)) => {
-                            dir.is_expanded = !dir.is_expanded;
-                        }
-                        
-                        _ => { panic!("not a dir when expand"); }
+                    if let Node::Dir(dir) = node {
+                        expand_dir(dir).unwrap();
+                    } else {
+                        panic!("not a dir when expand");
                     }
+
                 },
 
-                Message::EditName(path, is_active_requested) => { 
-                    let node = get_node(root_node, path);
+                Message::EditName(path, is_active_requested) => {
+                    /*
+                    let node = search_node_by_path(root_node, path);
 
                     match node {
                         Some(Node::Dir(ref mut dir)) => {
@@ -107,11 +109,13 @@ impl DirsTree {
                         }
                         _ => { panic!("Aucun node trouvé"); }
                     }
+                     */
                 },
 
                 Message::Rename(path) => { 
+                    /*
                     // TODO: call file_system module, if sucess copy cached name to name
-                    let node = get_node(root_node, path);
+                    let node = search_node_by_path(root_node, path);
 
                     match node {
                         Some(Node::Dir(ref mut dir)) => {
@@ -129,7 +133,7 @@ impl DirsTree {
                 
                         _ => { panic!("Aucun node trouvé"); }
                     }
-
+                     */
                 }
 
                 _ => {
