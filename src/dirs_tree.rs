@@ -16,7 +16,7 @@ use iced::widget::{column, row, Button, Column, Container, Row, Space, Text, Tex
 
 use crate::app::{self};
 
-use crate::files_explorer::{get_node, DirNode, FileNode, Node};
+use crate::files_explorer::{search_node_by_path, Dir, File, Node, expand_dir};
 
 #[derive(Clone, Debug)]
 pub struct DirsTree {}
@@ -52,84 +52,88 @@ impl DirsTree {
         match root_node_opt {
             Some(root_node) => match message {
                 Message::InputChanged(path, value) => {
+                    /*
 
-                    let node = get_node(root_node, path);
+                    let node = search_node_by_path(root_node, path);
 
                     match node {
                         Some(Node::Dir(ref mut dir)) => {
 
-                            dir.full_name_cached = value;
+                            dir.name_cached = value;
                         }
 
                         Some(Node::File(ref mut file)) => {
-                            println!("{}", file.full_name_cached);
+                            println!("{}", file.name_cached);
 
-                            file.full_name_cached = value;
+                            file.name_cached = value;
                         }
                         _ => { panic!("Aucun node trouvé"); }
                     }
+                     */
                 }
 
                 Message::Expand(path) => {
 
-                    let node = get_node(root_node, path);
+                    let node = search_node_by_path(root_node, path, true).unwrap();
 
-                    match node {
-                        Some(Node::Dir(ref mut dir)) => {
-                            dir.expanded = !dir.expanded;
-                        }
-                        
-                        _ => { panic!("not a dir when expand"); }
+                    if let Node::Dir(dir) = node {
+                        expand_dir(dir).unwrap();
+                    } else {
+                        panic!("not a dir when expand");
                     }
+
                 },
 
-                Message::EditName(path, is_active_requested) => { 
-                    let node = get_node(root_node, path);
+                Message::EditName(path, is_active_requested) => {
+                    /*
+                    let node = search_node_by_path(root_node, path);
 
                     match node {
                         Some(Node::Dir(ref mut dir)) => {
 
                             if (is_active_requested) {
-                                dir.edit_active = true;
+                                dir.is_name_is_edited = true;
                             } else {
-                                dir.full_name_cached = dir.full_name.clone();
-                                dir.edit_active = false;
+                                dir.name_cached = dir.name.clone();
+                                dir.is_name_is_edited = false;
                             }
                         }
 
                         Some(Node::File(ref mut file)) => {
                             if (is_active_requested) {
-                                file.edit_active = true;
+                                file.is_name_is_edited = true;
                             } else {
-                                file.full_name_cached = file.full_name.clone();
-                                file.edit_active = false;
+                                file.name_cached = file.name.clone();
+                                file.is_name_is_edited = false;
                             }
                         }
                         _ => { panic!("Aucun node trouvé"); }
                     }
+                     */
                 },
 
                 Message::Rename(path) => { 
+                    /*
                     // TODO: call file_system module, if sucess copy cached name to name
-                    let node = get_node(root_node, path);
+                    let node = search_node_by_path(root_node, path);
 
                     match node {
                         Some(Node::Dir(ref mut dir)) => {
 
-                            dir.full_name = dir.full_name_cached.clone();
-                            dir.edit_active = false;
+                            dir.name = dir.name_cached.clone();
+                            dir.is_name_is_edited = false;
                         }
 
                         Some(Node::File(ref mut file)) => {
 
-                            file.full_name = file.full_name_cached.clone();
-                            file.edit_active = false;
+                            file.name = file.name_cached.clone();
+                            file.is_name_is_edited = false;
 
                         }
                 
                         _ => { panic!("Aucun node trouvé"); }
                     }
-
+                     */
                 }
 
                 _ => {
@@ -162,13 +166,13 @@ impl DirsTree {
     }
 }
 
-fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
+fn view_tree(racine: &Dir, indent: f32) -> Element<app::Message> {
     let mut view_rep: Vec<Element<app::Message>> = Vec::new();
 
     for node in racine.content.iter() {
         match node {
             Node::Dir(dir) => {
-                let icon = if (dir.expanded) {
+                let icon = if (dir.is_expanded) {
                     Button::new(icons::chevron_down_icon())
                         .on_press(app::Message::DirsTree(Message::Expand(node.path())))
                 } else {
@@ -176,8 +180,8 @@ fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
                         .on_press(app::Message::DirsTree(Message::Expand(node.path())))
                 };
 
-                let text: Element<app::Message> = if (dir.edit_active) {
-                    TextInput::new("dir name", &dir.full_name_cached)
+                let text: Element<app::Message> = if (dir.is_name_is_edited) {
+                    TextInput::new("dir name", &dir.name_cached)
                                 .width(Length::Fill)
                                 .size(15)
                                 .on_input(|value| {
@@ -189,7 +193,7 @@ fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
                                 .on_submit(app::Message::DirsTree(Message::Rename(node.path())))
                                 .into()
                 } else {
-                    Text::new(&dir.full_name_cached)
+                    Text::new(&dir.name)
                         .width(Length::Fill)
                         .size(15)
                         .into()
@@ -204,7 +208,7 @@ fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
                         .into(),
                 );
 
-                if dir.expanded {
+                if dir.is_expanded {
                     let new_indent = indent + 15f32;
                     view_rep.push(view_tree(&dir, new_indent));
                 }
@@ -213,10 +217,10 @@ fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
             Node::File(file) => {
 
                 let icon = Button::new(icons::file_icon())
-                    .on_press(app::Message::DirsTree(Message::EditName(node.path(), !file.edit_active)));
+                    .on_press(app::Message::DirsTree(Message::EditName(node.path(), !file.is_name_is_edited)));
 
-                let text: Element<app::Message> = if (file.edit_active) {
-                    TextInput::new("dir name", &file.full_name_cached)
+                let text: Element<app::Message> = if (file.is_name_is_edited) {
+                    TextInput::new("dir name", &file.name_cached)
                                 .width(Length::Fill)
                                 .size(15)
                                 .on_input(|value| {
@@ -228,7 +232,7 @@ fn view_tree(racine: &DirNode, indent: f32) -> Element<app::Message> {
                                 .on_submit(app::Message::DirsTree(Message::Rename(node.path())))
                                 .into()
                 } else {
-                    Text::new(&file.full_name_cached)
+                    Text::new(&file.name)
                         .width(Length::Fill)
                         .size(15)
                         .into()

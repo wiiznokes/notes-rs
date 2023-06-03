@@ -20,9 +20,11 @@ use iced::Element;
 
 use iced::widget::Space;
 
-use crate::files_explorer::{DirNode, FileNode, Node};
+use crate::files_explorer::{Dir, File, Node};
 
 pub struct Notes {
+    root_path: Option<PathBuf>,
+
     pub actions: Actions,
     pub dirs_tree: DirsTree,
     pub onglets: Onglets,
@@ -48,22 +50,34 @@ impl Application for Notes {
     type Theme = iced::Theme;
 
     fn new(_flags: ()) -> (Self, Command<Self::Message>) {
-        let app = Notes {
-            actions: Actions::new(),
-            dirs_tree: DirsTree::new(),
-            onglets: Onglets::new(),
-            file_system: None,
-            sender: None
-        };
 
         let mut args = env::args();
         // prog name
         args.next();
 
-        let arg = args.next();
+        let root_path = if let Some(path) = args.next() {
+            Some(PathBuf::from(path))
+        } else {
+            None
+        };
 
-        let command = if let Some(dir_path) = arg {
-            Command::perform(load(dir_path), Message::Loaded)
+
+        let root_path_clone = root_path.clone();
+    
+
+        let app = Notes {
+            actions: Actions::new(),
+            dirs_tree: DirsTree::new(),
+            onglets: Onglets::new(),
+            file_system: None,
+            sender: None,
+            root_path: root_path,
+        };
+
+        
+
+        let command = if let Some(path) = root_path_clone {
+            Command::perform(load(path.clone()), Message::Loaded)
         } else {
             Command::none()
         };
@@ -75,10 +89,12 @@ impl Application for Notes {
         String::from("Notes")
     }
 
+    /* 
     fn subscription(&self) -> Subscription<Message> {
         println!("subscription (in app)");
-        watcher::start_watch().map(Message::Watcher)
+        watcher::start_watcher().map(Message::Watcher)
     }
+    */
 
     fn update(&mut self, message: Message) -> Command<Self::Message> {
         match message {
@@ -107,10 +123,13 @@ impl Application for Notes {
                 println!("receive msg from watch: {:?}", sub_msg);
 
                 match sub_msg {
-                    watcher::Message::Connected(mut sender) => {
-                        let msg_to_send = watcher::Message::Watch(Path::new("commence le watchage").to_path_buf());
-                        sender.try_send(msg_to_send)
-                            .expect("error tring to send to watcher");
+                    watcher::Message::Waiting(mut sender) => {
+                        if let Some(path) = &self.root_path {
+                            let msg_to_send = watcher::Message::Watch(path.clone());
+                            println!("try send, {:?}", msg_to_send);
+                            sender.try_send(msg_to_send)
+                                .expect("error tring to send to watcher");
+                        }
                         
                         self.sender = Some(sender);
                     }
@@ -137,18 +156,12 @@ impl Application for Notes {
 
 use std::path;
 
-async fn load(path_str: String) -> Result<Node, String> {
-    let path: &Path = Path::new(&path_str);
+async fn load(path: PathBuf) -> Result<Node, String> {
 
 
- 
-
-    match files_explorer::create_dir_node(path) {
+    match files_explorer::init_explorer(path) {
         Ok(dir_node) => {
             //println!("{:?}", dir_node);
-            
-            let path_buf = path.to_path_buf();
-            
             
             Ok(Node::Dir(dir_node))
         }
