@@ -11,6 +11,10 @@
 - https://github.com/pop-os/cosmic-text-editor
 - https://github.com/iced-rs/iced_aw
 
+# notify
+- https://github.com/hannobraun/inotify-rs
+- https://github.com/notify-rs/notify
+
 
 ## example
 - https://github.com/iced-rs/iced/tree/master/examples/pane_grid

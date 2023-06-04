@@ -12,3 +12,4 @@ iced = "0.9"
 color-eyre = "0.6.2"
 inotify = "0.10.0"
 tokio = {version = "1.28.2", features = ["full"]}
+notify = "6.0.0"
