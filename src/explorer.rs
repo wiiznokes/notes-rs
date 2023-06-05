@@ -128,7 +128,7 @@ impl Explorer {
             Some(name) => name.to_string_lossy().to_string(),
             None => {
                 if (path.to_string_lossy() == "/") {
-                    "".to_string()
+                    "/".to_string()
                 } else {
                     return Err(format!(
                         "can't read the name of the path {}",
