@@ -16,6 +16,7 @@ mod onglets;
 mod explorer;
 mod icons;
 mod notify;
+mod button;
 
 pub fn main() {
 

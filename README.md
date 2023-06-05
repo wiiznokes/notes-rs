@@ -78,9 +78,12 @@ sudo dnf install rust-gdk-sys+default-devel
 
 - File 
 New file
+
 Open File
 Open Folder
+
 Settings
+
 Quit
 
 - Push
