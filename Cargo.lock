@@ -1526,6 +1526,7 @@ name = "notes_rs"
 version = "0.1.0"
 dependencies = [
  "color-eyre",
+ "futures",
  "iced",
  "inotify 0.10.0",
  "notify",

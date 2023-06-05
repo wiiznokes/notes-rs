@@ -1,11 +1,8 @@
 #!/bin/bash
-
+set -e
 clear
 
 cargo build --release
 
-if [[ $? -eq 0 ]]; then
+./target/release/notes_rs /home/lenaic/Documents/notes-rs/aaa_test
 
-    #clear
-    ./target/release/notes_rs /home/lenaic/Documents/notes-rs/
-fi
