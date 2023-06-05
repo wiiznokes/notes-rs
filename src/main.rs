@@ -17,7 +17,7 @@ mod explorer;
 mod icons;
 mod notify;
 
-pub fn main() -> color_eyre::Result<()> {
+pub fn main() {
 
     //env::set_var("RUST_BACKTRACE", "full");
 
@@ -25,14 +25,13 @@ pub fn main() -> color_eyre::Result<()> {
 
    
 
-    color_eyre::install()?;
+
 
     
 
 
 
    
-    Notes::run(Settings::default())?;
+    Notes::run(Settings::default()).unwrap();
 
-    Ok(())
 }

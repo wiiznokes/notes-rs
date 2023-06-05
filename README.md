@@ -70,3 +70,19 @@ sudo dnf install rust-gdk-sys+default-devel
 - https://icons.getbootstrap.com/icons/folder/
 - https://icons.getbootstrap.com/icons/chevron-down/
 - https://icons.getbootstrap.com/icons/chevron-right/   
+
+
+- Toggle
+
+- Search
+
+- File 
+New file
+Open File
+Open Folder
+Settings
+Quit
+
+- Push
+
+- Fetch

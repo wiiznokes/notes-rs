@@ -13,6 +13,18 @@ use crate::app;
 
 use iced::widget::Space;
 
+use iced::widget::column as col;
+use iced::widget::{
+    button, checkbox, container, horizontal_space, pick_list, row, slider, svg, text, text_input,
+    toggler, vertical_slider,
+};
+use iced::{alignment, theme, Application, Color};
+
+use iced_aw::menu::{CloseCondition, ItemHeight, ItemWidth, MenuTree, PathHighlight};
+use iced_aw::quad;
+//use iced_aw::{helpers::menu_tree, menu_bar, menu_tree};
+
+
 #[derive(Clone, Debug)]
 pub struct Actions {
     tt: i32,
@@ -21,10 +33,9 @@ pub struct Actions {
 #[derive(Clone, Debug)]
 pub enum Message {
     Toggle,
-    Settings,
+    Search,
     Push,
     Fetch,
-    Edit,
 }
 
 impl Actions {
@@ -35,10 +46,10 @@ impl Actions {
     pub fn update(&mut self, message: Message) -> iced::Command<app::Message> {
         match message {
             Message::Toggle => todo!(),
-            Message::Settings => todo!(),
             Message::Push => todo!(),
             Message::Fetch => todo!(),
-            Message::Edit => todo!(),
+
+            _ => todo!()
         }
     }
 
@@ -63,4 +74,10 @@ impl Actions {
             .push(Space::new(5, 0))
             .into()
     }
+}
+
+
+
+fn files_menu() {
+
 }
