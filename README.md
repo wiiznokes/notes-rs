@@ -7,6 +7,7 @@
 - rename
 - delete
 - create file / dir
+- handle relative / absolute path
 - impl of notify events
 
 
