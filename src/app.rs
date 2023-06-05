@@ -12,26 +12,22 @@ use iced::{Application, Command};
 
 use crate::actions::{self, Actions};
 use crate::dirs_tree::{self, DirsTree};
-use crate::{explorer, notify};
 use crate::onglets::{self, Onglets};
+use crate::{explorer, notify};
 
 use iced::widget::{Column, Row};
 use iced::Element;
 
 use iced::widget::Space;
 
-use crate::explorer::{Dir, File, Node, Explorer};
+use crate::explorer::{Dir, Explorer, File, Node};
 
 pub struct Notes {
-    explorer_path: Option<PathBuf>,
-
     pub actions: Actions,
     pub dirs_tree: DirsTree,
     pub onglets: Onglets,
 
     pub explorer: Option<Explorer>,
-
-    watcher: Option<Sender<notify::Message>>,
 }
 
 #[derive(Debug, Clone)]
@@ -51,27 +47,19 @@ impl Application for Notes {
     type Theme = iced::Theme;
 
     fn new(_flags: ()) -> (Self, Command<Self::Message>) {
-
         let mut args = env::args();
-        // prog name
-        args.next();
+    
 
-        let root_path = args.next().map(PathBuf::from);
-
+        let root_path = args.nth(1).map(PathBuf::from);
 
         let root_path_clone = root_path.clone();
-    
 
         let app = Notes {
             actions: Actions::new(),
             dirs_tree: DirsTree::new(),
             onglets: Onglets::new(),
             explorer: None,
-            watcher: None,
-            explorer_path: root_path,
         };
-
-        
 
         let command = if let Some(path) = root_path_clone {
             Command::perform(load(path), Message::Loaded)
@@ -86,35 +74,30 @@ impl Application for Notes {
         String::from("Notes")
     }
 
-    
     fn subscription(&self) -> Subscription<Message> {
         // todo: when we start the app without a path, we will never handle the Waiting call
         notify::start_watcher().map(|msg| Message::Explorer(explorer::Message::Watcher(msg)))
     }
-  
 
     fn update(&mut self, message: Message) -> Command<Self::Message> {
         match message {
-            Message::Explorer(msg) => if let Some(ref mut explorer) = self.explorer {
-                return explorer.handle_message(msg).map(Message::Explorer);
-            }
-            Message::Loaded(res) => {
-                match res {
-                    Ok(explorer) => {
-                        self.explorer = Some(explorer);
-                    }
-                    Err(error) => {
-                        println!("{error}");
-                    }
+            Message::Explorer(msg) => {
+                if let Some(ref mut explorer) = self.explorer {
+                    return explorer.handle_message(msg).map(Message::Explorer);
                 }
             }
+            Message::Loaded(res) => match res {
+                Ok(explorer) => {
+                    self.explorer = Some(explorer);
+                }
+                Err(error) => {
+                    println!("{error}");
+                }
+            },
 
             Message::Actions(msg) => return self.actions.update(msg),
-            Message::DirsTree(msg) => {
-                return self.dirs_tree.update(msg, &mut self.explorer)
-            }
+            Message::DirsTree(msg) => return self.dirs_tree.update(msg, &mut self.explorer),
             Message::Onglets(msg) => return self.onglets.update(msg),
-
         }
         Command::none()
     }
@@ -132,10 +115,8 @@ impl Application for Notes {
     }
 }
 
-
 use std::path;
 
 async fn load(path: PathBuf) -> Result<Explorer, String> {
-
     Explorer::new(path)
 }

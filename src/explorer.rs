@@ -7,8 +7,8 @@ use std::ffi::OsStr;
 use std::fs;
 use std::path::{Iter, Path, PathBuf};
 
-use iced::Command;
 use iced::futures::channel::mpsc::Sender;
+use iced::Command;
 
 use crate::notify;
 
@@ -19,7 +19,6 @@ pub struct Explorer {
 
     watcher: Option<Sender<notify::Message>>,
 }
-
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -161,65 +160,52 @@ impl Explorer {
         })
     }
 
-
-
     pub fn expand_dir(&mut self, path: PathBuf) -> Result<(), String> {
-       
         let node = search_node_by_path(&mut self.files, path, true).unwrap();
-
 
         if let Node::Dir(dir) = node {
             dir.is_expanded = !dir.is_expanded;
 
-        if dir.has_been_expanded {
-            Ok(())
-        } else {
-            let res = fill_dir_content(&mut dir.content, &dir.path.clone());
+            if dir.has_been_expanded {
+                Ok(())
+            } else {
+                let res = fill_dir_content(&mut dir.content, &dir.path.clone());
 
-            if let Some(ref mut watcher) = self.watcher {
-                let msg_to_send = notify::Message::Watch(dir.path.clone());
+                if let Some(ref mut watcher) = self.watcher {
+                    let msg_to_send = notify::Message::Watch(dir.path.clone());
 
-                watcher
-                    .try_send(msg_to_send)
-                    .expect("error tring to send to watcher");
+                    watcher
+                        .try_send(msg_to_send)
+                        .expect("error tring to send to watcher");
+                }
+                dir.has_been_expanded = true;
+                res
             }
-            dir.has_been_expanded = true;
-            res
-        }
         } else {
             panic!("not a dir when expand");
         }
-        
     }
 
-
-
-
     pub fn handle_message(&mut self, message: Message) -> Command<Message> {
-
-
         match message {
-            Message::Watcher(msg) => {
-                match msg {
-                    notify::Message::Waiting(mut watcher) => {
-                        let msg_to_send = notify::Message::Watch(self.root_path.clone());
-                        watcher.try_send(msg_to_send)
-                            .expect("error tring to send to watcher");
-                      
-                        self.watcher = Some(watcher);
-                    },
-                    notify::Message::Event(_) => todo!(),
+            Message::Watcher(msg) => match msg {
+                notify::Message::Waiting(mut watcher) => {
+                    let msg_to_send = notify::Message::Watch(self.root_path.clone());
+                    watcher
+                        .try_send(msg_to_send)
+                        .expect("error tring to send to watcher");
 
-
-                    _ => panic!("should never happend")
+                    self.watcher = Some(watcher);
                 }
-            }
+                notify::Message::Event(_) => todo!(),
+
+                _ => panic!("should never happend"),
+            },
         }
-        
+
         Command::none()
     }
 }
-
 
 fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), String> {
     let dir_entries = match fs::read_dir(path) {
