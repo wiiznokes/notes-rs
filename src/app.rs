@@ -20,7 +20,7 @@ use iced::Element;
 
 use iced::widget::Space;
 
-use crate::explorer::{Dir, File, Node};
+use crate::explorer::{Dir, File, Node, Explorer};
 
 pub struct Notes {
     explorer_path: Option<PathBuf>,
@@ -29,18 +29,19 @@ pub struct Notes {
     pub dirs_tree: DirsTree,
     pub onglets: Onglets,
 
-    pub explorer: Option<Node>,
+    pub explorer: Option<Explorer>,
 
     watcher: Option<Sender<notify::Message>>,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    Loaded(Result<Node, String>),
+    Loaded(Result<Explorer, String>),
+
+    Explorer(explorer::Message),
     Actions(actions::Message),
     DirsTree(dirs_tree::Message),
     Onglets(onglets::Message),
-    Watcher(notify::Message)
 }
 
 impl Application for Notes {
@@ -91,52 +92,35 @@ impl Application for Notes {
 
     
     fn subscription(&self) -> Subscription<Message> {
-        println!("subscription (in app)");
-        notify::start_watcher().map(Message::Watcher)
+        // todo: when we start the app without a path, we will never handle the Waiting call
+        notify::start_watcher().map(|msg| Message::Explorer(explorer::Message::Watcher(msg)))
     }
   
 
     fn update(&mut self, message: Message) -> Command<Self::Message> {
         match message {
+            Message::Explorer(msg) => if let Some(ref mut explorer) = self.explorer {
+                return explorer.handle_message(msg).map(Message::Explorer);
+            }
             Message::Loaded(res) => {
                 match res {
-                    Ok(Node::Dir(dir_node)) => {
-                        self.explorer = Some(Node::Dir(dir_node));
+                    Ok(explorer) => {
+                        self.explorer = Some(explorer);
                     }
                     Err(error) => {
                         println!("{error}");
                     }
-                    _ => {
-                        panic!()
-                    }
                 }
-                Command::none()
             }
 
-            Message::Actions(sub_message) => self.actions.update(sub_message),
-            Message::DirsTree(sub_message) => {
-                self.dirs_tree.update(sub_message, &mut self.explorer, &mut self.watcher)
+            Message::Actions(msg) => return self.actions.update(msg),
+            Message::DirsTree(msg) => {
+                return self.dirs_tree.update(msg, &mut self.explorer)
             }
-            Message::Onglets(sub_message) => self.onglets.update(sub_message),
+            Message::Onglets(msg) => return self.onglets.update(msg),
 
-            Message::Watcher(sub_msg) => {
-                println!("receive msg from watcher: {:?}", sub_msg);
-
-                match sub_msg {
-                    notify::Message::Waiting(mut sender) => {
-                        if let Some(path) = &self.explorer_path {
-                            let msg_to_send = notify::Message::Watch(path.clone());
-                            sender.try_send(msg_to_send)
-                                .expect("error tring to send to watcher");
-                        }
-                        
-                        self.watcher = Some(sender);
-                    }
-                    _ => {}
-                }
-                Command::none()
-            }
         }
+        Command::none()
     }
 
     fn view(&self) -> Element<Message> {
@@ -155,15 +139,7 @@ impl Application for Notes {
 
 use std::path;
 
-async fn load(path: PathBuf) -> Result<Node, String> {
+async fn load(path: PathBuf) -> Result<Explorer, String> {
 
-
-    match explorer::init_explorer(path) {
-        Ok(dir_node) => {
-            //println!("{:?}", dir_node);
-            
-            Ok(Node::Dir(dir_node))
-        }
-        Err(error) => Err(error),
-    }
+    Explorer::new(path)
 }

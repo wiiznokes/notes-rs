@@ -19,7 +19,7 @@ use iced::widget::{column, row, Button, Column, Container, Row, Space, Text, Tex
 
 use crate::app::{self};
 
-use crate::explorer::{search_node_by_path, Dir, File, Node, expand_dir};
+use crate::explorer::{search_node_by_path, Dir, File, Node, Explorer};
 
 #[derive(Clone, Debug)]
 pub struct DirsTree {}
@@ -50,11 +50,10 @@ impl DirsTree {
     pub fn update(
         &mut self,
         message: Message,
-        root_node_opt: &mut Option<Node>,
-        watcher: &mut Option<Sender<notify::Message>>
+        explorer_opt: &mut Option<Explorer>,
     ) -> iced::Command<app::Message> {
-        match root_node_opt {
-            Some(root_node) => match message {
+        match explorer_opt {
+            Some(explorer) => match message {
                 Message::InputChanged(path, value) => {
                     /*
 
@@ -77,14 +76,7 @@ impl DirsTree {
                 }
 
                 Message::Expand(path) => {
-
-                    let node = search_node_by_path(root_node, path, true).unwrap();
-
-                    if let Node::Dir(dir) = node {
-                        expand_dir(dir, watcher).unwrap();
-                    } else {
-                        panic!("not a dir when expand");
-                    }
+                    explorer.expand_dir(path).unwrap();
 
                 },
 
@@ -152,9 +144,9 @@ impl DirsTree {
         Command::none()
     }
 
-    pub fn view<'a>(&'a self, files: &'a Option<Node>) -> Element<app::Message> {
-        let tree = match files {
-            Some(Node::Dir(dir)) => view_tree(dir, 0f32),
+    pub fn view<'a>(&'a self, explorer_opt: &'a Option<Explorer>) -> Element<app::Message> {
+        let tree = match explorer_opt {
+            Some(explorer) => view_tree(explorer.files.to_dir().unwrap(), 0f32),
             _ => Text::new("nothing to show").into(),
         };
 
