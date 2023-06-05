@@ -3,10 +3,10 @@
 #![allow(unused_imports)]
 #![allow(unused_parens)]
 
+use iced::futures::channel::mpsc::Sender;
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
-use iced::futures::channel::mpsc::Sender;
 
 use iced::Command;
 use iced::{Element, Length};
@@ -19,7 +19,7 @@ use iced::widget::{column, row, Button, Column, Container, Row, Space, Text, Tex
 
 use crate::app::{self};
 
-use crate::files_explorer::{search_node_by_path, Dir, File, Node, expand_dir};
+use crate::explorer::{search_node_by_path, Dir, Explorer, File, Node};
 
 #[derive(Clone, Debug)]
 pub struct DirsTree {}
@@ -50,11 +50,10 @@ impl DirsTree {
     pub fn update(
         &mut self,
         message: Message,
-        root_node_opt: &mut Option<Node>,
-        watcher: &mut Option<Sender<notify::Message>>
+        explorer_opt: &mut Option<Explorer>,
     ) -> iced::Command<app::Message> {
-        match root_node_opt {
-            Some(root_node) => match message {
+        match explorer_opt {
+            Some(explorer) => match message {
                 Message::InputChanged(path, value) => {
                     /*
 
@@ -77,16 +76,8 @@ impl DirsTree {
                 }
 
                 Message::Expand(path) => {
-
-                    let node = search_node_by_path(root_node, path, true).unwrap();
-
-                    if let Node::Dir(dir) = node {
-                        expand_dir(dir, watcher).unwrap();
-                    } else {
-                        panic!("not a dir when expand");
-                    }
-
-                },
+                    explorer.expand_dir(path).unwrap();
+                }
 
                 Message::EditName(path, is_active_requested) => {
                     /*
@@ -114,9 +105,9 @@ impl DirsTree {
                         _ => { panic!("Aucun node trouvé"); }
                     }
                      */
-                },
+                }
 
-                Message::Rename(path) => { 
+                Message::Rename(path) => {
                     /*
                     // TODO: call file_system module, if sucess copy cached name to name
                     let node = search_node_by_path(root_node, path);
@@ -134,7 +125,7 @@ impl DirsTree {
                             file.is_name_is_edited = false;
 
                         }
-                
+
                         _ => { panic!("Aucun node trouvé"); }
                     }
                      */
@@ -147,14 +138,14 @@ impl DirsTree {
 
             _ => {
                 panic!("no root_node"); // should never happended, since there is nothing to show
-            } 
+            }
         }
         Command::none()
     }
 
-    pub fn view<'a>(&'a self, files: &'a Option<Node>) -> Element<app::Message> {
-        let tree = match files {
-            Some(Node::Dir(dir)) => view_tree(dir, 0f32),
+    pub fn view<'a>(&'a self, explorer_opt: &'a Option<Explorer>) -> Element<app::Message> {
+        let tree = match explorer_opt {
+            Some(explorer) => view_tree(explorer.files.to_dir().unwrap(), 0f32),
             _ => Text::new("nothing to show").into(),
         };
 
@@ -186,21 +177,15 @@ fn view_tree(racine: &Dir, indent: f32) -> Element<app::Message> {
 
                 let text: Element<app::Message> = if (dir.is_name_is_edited) {
                     TextInput::new("dir name", &dir.name_cached)
-                                .width(Length::Fill)
-                                .size(15)
-                                .on_input(|value| {
-                                    app::Message::DirsTree(Message::InputChanged(
-                                        node.path(),
-                                        value,
-                                    ))
-                                })
-                                .on_submit(app::Message::DirsTree(Message::Rename(node.path())))
-                                .into()
-                } else {
-                    Text::new(&dir.name)
                         .width(Length::Fill)
                         .size(15)
+                        .on_input(|value| {
+                            app::Message::DirsTree(Message::InputChanged(node.path(), value))
+                        })
+                        .on_submit(app::Message::DirsTree(Message::Rename(node.path())))
                         .into()
+                } else {
+                    Text::new(&dir.name).width(Length::Fill).size(15).into()
                 };
 
                 view_rep.push(
@@ -214,32 +199,26 @@ fn view_tree(racine: &Dir, indent: f32) -> Element<app::Message> {
 
                 if dir.is_expanded {
                     let new_indent = indent + 15f32;
-                    view_rep.push(view_tree(&dir, new_indent));
+                    view_rep.push(view_tree(dir, new_indent));
                 }
             }
 
             Node::File(file) => {
-
-                let icon = Button::new(icons::file_icon())
-                    .on_press(app::Message::DirsTree(Message::EditName(node.path(), !file.is_name_is_edited)));
+                let icon = Button::new(icons::file_icon()).on_press(app::Message::DirsTree(
+                    Message::EditName(node.path(), !file.is_name_is_edited),
+                ));
 
                 let text: Element<app::Message> = if (file.is_name_is_edited) {
                     TextInput::new("dir name", &file.name_cached)
-                                .width(Length::Fill)
-                                .size(15)
-                                .on_input(|value| {
-                                    app::Message::DirsTree(Message::InputChanged(
-                                        node.path(),
-                                        value,
-                                    ))
-                                })
-                                .on_submit(app::Message::DirsTree(Message::Rename(node.path())))
-                                .into()
-                } else {
-                    Text::new(&file.name)
                         .width(Length::Fill)
                         .size(15)
+                        .on_input(|value| {
+                            app::Message::DirsTree(Message::InputChanged(node.path(), value))
+                        })
+                        .on_submit(app::Message::DirsTree(Message::Rename(node.path())))
                         .into()
+                } else {
+                    Text::new(&file.name).width(Length::Fill).size(15).into()
                 };
 
                 view_rep.push(
@@ -257,8 +236,6 @@ fn view_tree(racine: &Dir, indent: f32) -> Element<app::Message> {
     column(view_rep).into()
 }
 
-
-
-fn space_custom(indent: f32)  -> Space {
+fn space_custom(indent: f32) -> Space {
     Space::new(Length::Fixed(indent), 0)
 }
