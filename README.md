@@ -1,107 +1,63 @@
 # Notes
 
-## docs
-- https://doc.rust-lang.org/book/ch00-00-introduction.html
-- https://docs.rs/iced/latest/iced/
-- https://www.youtube.com/watch?v=TJTDTyNdJdY
-## repo
-- https://github.com/iced-rs/iced
-- https://github.com/pop-os/cosmic-epoch
-- https://github.com/pop-os/cosmic-text
-- https://github.com/pop-os/cosmic-text-editor
-- https://github.com/iced-rs/iced_aw
 
-# notify
-- https://github.com/hannobraun/inotify-rs
-- https://github.com/notify-rs/notify
+## Todo
+- view root directory in explorer
+- right click for actions
+- rename
+- delete
+- create file / dir
+- impl of notify events
 
 
-## example
-- https://github.com/iced-rs/iced/tree/master/examples/pane_grid
-- https://github.com/iced-rs/iced/tree/master/examples/todos
 
-## example files explo
-- https://github.com/Kaiden42/PWDuck
+
+## Goal
+Provide a fast, simple tool for taking note, yet powerfull. Must integrate well with new cosmic DE. Code must be as modulable as possible.
+- file explorer
+- search engine
+- tabs
+- buttons to launch custom script (like `git pull`)
+- support for various formats (pdf, md, html, txt)
+
+
+## Rust
+- [book](https://doc.rust-lang.org/book/ch00-00-introduction.html)
+
+## Iced
+- [github](https://github.com/iced-rs/iced)
+
+## notify
+- [github](https://github.com/notify-rs/notify)
+- [doc](https://docs.rs/notify/6.0.0/notify/)
+
+## cosmic
+- [epoch](https://github.com/pop-os/cosmic-epoch)
+- [text](ttps://github.com/pop-os/cosmic-text)
+- [text-editor](https://github.com/pop-os/cosmic-text-editor)
+- [time](https://github.com/pop-os/cosmic-time)
 
 ## search engine
-- https://github.com/tsoding/seroost
+- [seroost](https://github.com/tsoding/seroost)
 
-## Steps
 
-- definir la stucture qui contient les fichier dans app.rs
-- reussir a afficher la structure principale du projet
-```
-column {
-    row {
-        actions
-    }
-    row {
-        files_view
-        onglets
-    }
-}
-```
-- envoyer un message a partir de app.rs
-- envoyer un message a partir d'action.rs
-- modifier le state de l'app a partir d'action.rs
-- implementer la structure de fichier
-- reflechir a comment update la view a chaque modification d'un fichier autre que par l'app
-- apprendre à gerer la concurency en Rust
+## UI
+UI stucture will look something like [this](./asset/app.pdf).
+And will be very inspired of [text-editor](https://github.com/pop-os/cosmic-text-editor).
 
 
 ## Dependencies Fedora 
 
 - for iced
-`sudo dnf install freetype-devel expat-devel fontconfig-devel`
+```
+sudo dnf install freetype-devel expat-devel fontconfig-devel
+```
 
 - for cosmic (not used in here)
-`sudo dnf install rust-gdk-sys+default-devel`
+```
+sudo dnf install rust-gdk-sys+default-devel
+```
 
-
-## fonctionnalité
-
-- file type support plan: pdf, md, (html, CSS), plain text
-- tabs
-- modif
-- view .txt et .md
-- params
-- fetch
-- send
-- create files
-- create dirs
-- dirs and files navigation
-- select racine
-- search engine
-
-
-## idée
-
-majeurs fonctionnalitées:
-- search
-- view tree (must be reactive)
-- display (must be reactive, the display content must be cached)
-
-
-Pour view tree:
-
-Je veux faire un application en Rust qui afficher un repertoire sous forme d'arbre.
-Pense tu que ceci est une bonne approche pour ma structure de donnée ?
-
-struct dir_node {
-    path: Path,
-    is_expand: bool,
-    full_name: String,
-
-    content: HashMap<string, soit dir_node soit file_node>
-}
-
-
-
-struct file_node {
-    extension: String,
-    full_name: String,
-    path: Path
-}
 
 
 
