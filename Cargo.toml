@@ -3,14 +3,16 @@ name = "notes_rs"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-rust-version = "1.65.0"
+rust-version = "1.70.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 iced = "0.9"
-color-eyre = "0.6.2"
-inotify = "0.10.0"
-tokio = {version = "1.28.2", features = ["full"]}
 notify = "6.0.0"
 futures = "0.3.28"
+iced_aw = { version = "0.5.2", features = [
+    "menu",
+    "quad",
+    "icon_text"
+] }
