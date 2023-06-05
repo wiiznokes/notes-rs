@@ -11,7 +11,7 @@ use iced::{executor, Subscription};
 use iced::{Application, Command};
 
 use crate::actions::{self, Actions};
-use crate::tree::{self, DirsTree};
+use crate::tree::{self, Tree};
 use crate::onglets::{self, Onglets};
 use crate::{explorer, notify};
 
@@ -24,7 +24,7 @@ use crate::explorer::{Dir, Explorer, File, Node};
 
 pub struct Notes {
     pub actions: Actions,
-    pub dirs_tree: DirsTree,
+    pub dirs_tree: Tree,
     pub onglets: Onglets,
 
     pub explorer: Option<Explorer>,
@@ -56,7 +56,7 @@ impl Application for Notes {
 
         let app = Notes {
             actions: Actions::new(),
-            dirs_tree: DirsTree::new(),
+            dirs_tree: Tree::new(),
             onglets: Onglets::new(),
             explorer: None,
         };
