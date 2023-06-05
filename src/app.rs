@@ -11,7 +11,7 @@ use iced::{executor, Subscription};
 use iced::{Application, Command};
 
 use crate::actions::{self, Actions};
-use crate::dirs_tree::{self, DirsTree};
+use crate::tree::{self, DirsTree};
 use crate::onglets::{self, Onglets};
 use crate::{explorer, notify};
 
@@ -36,7 +36,7 @@ pub enum Message {
 
     Explorer(explorer::Message),
     Actions(actions::Message),
-    DirsTree(dirs_tree::Message),
+    DirsTree(tree::Message),
     Onglets(onglets::Message),
 }
 

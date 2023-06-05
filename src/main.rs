@@ -10,7 +10,7 @@ mod app;
 use app::{Notes};
 
 mod actions;
-mod dirs_tree;
+mod tree;
 mod onglets;
 
 mod explorer;
