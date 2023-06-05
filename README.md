@@ -2,13 +2,13 @@
 
 
 ## Todo
-[x] view root directory in explorer
-[ ] right click for actions
-[ ] rename
-[ ] delete
-[ ] create file / dir
-[ ] handle relative / absolute path
-[ ] impl of notify events
+- [x] view root directory in explorer
+- [ ] right click for actions
+- [ ] rename
+- [ ] delete
+- [ ] create file / dir
+- [ ] handle relative / absolute path
+- [ ] impl of notify events
 
 
 
