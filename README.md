@@ -27,6 +27,8 @@ Provide a fast, simple tool for taking note, yet powerfull. Must integrate well 
 
 ## Iced
 - [github](https://github.com/iced-rs/iced)
+- [doc](https://docs.rs/iced/latest/iced/)
+- [aw](https://github.com/iced-rs/iced_aw)
 
 ## notify
 - [github](https://github.com/notify-rs/notify)
