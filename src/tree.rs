@@ -4,6 +4,7 @@
 #![allow(unused_parens)]
 
 use iced::futures::channel::mpsc::Sender;
+use iced::widget::scrollable::Properties;
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -15,7 +16,7 @@ use crate::icons;
 
 use crate::notify;
 
-use iced::widget::{column, row, Button, Column, Container, Row, Space, Text, TextInput};
+use iced::widget::{column, row, Button, Column, Container, Row, Space, Text, TextInput, Scrollable};
 
 use crate::app::{self};
 
@@ -180,7 +181,10 @@ impl Tree {
             self.view_tree_rec(racine, &mut lines, self.indent_space);
         }
 
-        column(lines).into()
+
+        Scrollable::new(column(lines))
+            .into()
+      
     }
     
     
