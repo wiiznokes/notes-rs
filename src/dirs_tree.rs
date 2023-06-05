@@ -6,11 +6,14 @@
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
+use iced::futures::channel::mpsc::Sender;
 
 use iced::Command;
 use iced::{Element, Length};
 
 use crate::icons;
+
+use crate::notify;
 
 use iced::widget::{column, row, Button, Column, Container, Row, Space, Text, TextInput};
 
@@ -48,6 +51,7 @@ impl DirsTree {
         &mut self,
         message: Message,
         root_node_opt: &mut Option<Node>,
+        watcher: &mut Option<Sender<notify::Message>>
     ) -> iced::Command<app::Message> {
         match root_node_opt {
             Some(root_node) => match message {
@@ -77,7 +81,7 @@ impl DirsTree {
                     let node = search_node_by_path(root_node, path, true).unwrap();
 
                     if let Node::Dir(dir) = node {
-                        expand_dir(dir).unwrap();
+                        expand_dir(dir, watcher).unwrap();
                     } else {
                         panic!("not a dir when expand");
                     }

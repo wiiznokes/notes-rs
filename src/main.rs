@@ -15,7 +15,7 @@ mod onglets;
 
 mod files_explorer;
 mod icons;
-mod watcher;
+mod notify;
 
 pub fn main() -> color_eyre::Result<()> {
 

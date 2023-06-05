@@ -12,7 +12,7 @@ use iced::{Application, Command};
 
 use crate::actions::{self, Actions};
 use crate::dirs_tree::{self, DirsTree};
-use crate::{files_explorer, watcher};
+use crate::{files_explorer, notify};
 use crate::onglets::{self, Onglets};
 
 use iced::widget::{Column, Row};
@@ -31,7 +31,7 @@ pub struct Notes {
 
     pub file_system: Option<Node>,
 
-    sender: Option<Sender<watcher::Message>>,
+    sender: Option<Sender<notify::Message>>,
 }
 
 #[derive(Debug, Clone)]
@@ -40,7 +40,7 @@ pub enum Message {
     Actions(actions::Message),
     DirsTree(dirs_tree::Message),
     Onglets(onglets::Message),
-    Watcher(watcher::Message)
+    Watcher(notify::Message)
 }
 
 impl Application for Notes {
@@ -89,12 +89,12 @@ impl Application for Notes {
         String::from("Notes")
     }
 
-    /* 
+    
     fn subscription(&self) -> Subscription<Message> {
         println!("subscription (in app)");
-        watcher::start_watcher().map(Message::Watcher)
+        notify::start_watcher().map(Message::Watcher)
     }
-    */
+  
 
     fn update(&mut self, message: Message) -> Command<Self::Message> {
         match message {
@@ -115,18 +115,17 @@ impl Application for Notes {
 
             Message::Actions(sub_message) => self.actions.update(sub_message),
             Message::DirsTree(sub_message) => {
-                self.dirs_tree.update(sub_message, &mut self.file_system)
+                self.dirs_tree.update(sub_message, &mut self.file_system, &mut self.sender)
             }
             Message::Onglets(sub_message) => self.onglets.update(sub_message),
 
             Message::Watcher(sub_msg) => {
-                println!("receive msg from watch: {:?}", sub_msg);
+                println!("receive msg from watcher: {:?}", sub_msg);
 
                 match sub_msg {
-                    watcher::Message::Waiting(mut sender) => {
+                    notify::Message::Waiting(mut sender) => {
                         if let Some(path) = &self.root_path {
-                            let msg_to_send = watcher::Message::Watch(path.clone());
-                            println!("try send, {:?}", msg_to_send);
+                            let msg_to_send = notify::Message::Watch(path.clone());
                             sender.try_send(msg_to_send)
                                 .expect("error tring to send to watcher");
                         }
