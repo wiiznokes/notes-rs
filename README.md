@@ -34,7 +34,7 @@ Provide a fast, simple tool for taking note, yet powerfull. Must integrate well 
 
 ## cosmic
 - [epoch](https://github.com/pop-os/cosmic-epoch)
-- [text](ttps://github.com/pop-os/cosmic-text)
+- [text](https://github.com/pop-os/cosmic-text)
 - [text-editor](https://github.com/pop-os/cosmic-text-editor)
 - [time](https://github.com/pop-os/cosmic-time)
 
