@@ -56,11 +56,7 @@ impl Application for Notes {
         // prog name
         args.next();
 
-        let root_path = if let Some(path) = args.next() {
-            Some(PathBuf::from(path))
-        } else {
-            None
-        };
+        let root_path = args.next().map(PathBuf::from);
 
 
         let root_path_clone = root_path.clone();
@@ -78,7 +74,7 @@ impl Application for Notes {
         
 
         let command = if let Some(path) = root_path_clone {
-            Command::perform(load(path.clone()), Message::Loaded)
+            Command::perform(load(path), Message::Loaded)
         } else {
             Command::none()
         };
@@ -130,7 +126,7 @@ impl Application for Notes {
             .push(
                 Row::new()
                     .push(self.dirs_tree.view(&self.explorer))
-                    .push(self.onglets.view(&self)),
+                    .push(self.onglets.view(self)),
             )
             .into()
     }

@@ -123,11 +123,9 @@ impl Explorer {
     ///
     /// Condition: root_path is a dir
     pub fn new(path: PathBuf) -> Result<Self, String> {
-        if let Err(e) = is_dir_exist(&path) {
-            return Err(e);
-        }
+        is_dir_exist(&path)?;
 
-        let dir_name = match path.clone().file_name() {
+        let dir_name = match path.file_name() {
             Some(name) => name.to_string_lossy().to_string(),
             None => {
                 if (path.to_string_lossy() == "/") {
@@ -152,7 +150,7 @@ impl Explorer {
             files: Node::Dir(Dir {
                 path: path.clone(),
                 is_expanded: true,
-                content: content,
+                content,
 
                 name: dir_name,
                 has_been_expanded: true,
@@ -311,7 +309,7 @@ fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), Strin
         }
     }
 
-    return Ok(());
+    Ok(())
 }
 
 // Vérifie si le chemin est un répertoire existant
@@ -409,11 +407,7 @@ pub fn search_node_by_path(
                 let current_search_path_is_dir = if is_dir {
                     true
                 } else {
-                    if (iter_index == search_path_count) {
-                        false
-                    } else {
-                        true
-                    }
+                    iter_index != search_path_count
                 };
 
                 let node_index = match get_index_sorted(

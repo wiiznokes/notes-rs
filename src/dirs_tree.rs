@@ -206,7 +206,7 @@ fn view_tree(racine: &Dir, indent: f32) -> Element<app::Message> {
 
                 if dir.is_expanded {
                     let new_indent = indent + 15f32;
-                    view_rep.push(view_tree(&dir, new_indent));
+                    view_rep.push(view_tree(dir, new_indent));
                 }
             }
 
