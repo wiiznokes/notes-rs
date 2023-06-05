@@ -19,7 +19,7 @@ use iced::widget::{column, row, Button, Column, Container, Row, Space, Text, Tex
 
 use crate::app::{self};
 
-use crate::files_explorer::{search_node_by_path, Dir, File, Node, expand_dir};
+use crate::explorer::{search_node_by_path, Dir, File, Node, expand_dir};
 
 #[derive(Clone, Debug)]
 pub struct DirsTree {}

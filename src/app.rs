@@ -12,7 +12,7 @@ use iced::{Application, Command};
 
 use crate::actions::{self, Actions};
 use crate::dirs_tree::{self, DirsTree};
-use crate::{files_explorer, notify};
+use crate::{explorer, notify};
 use crate::onglets::{self, Onglets};
 
 use iced::widget::{Column, Row};
@@ -20,18 +20,18 @@ use iced::Element;
 
 use iced::widget::Space;
 
-use crate::files_explorer::{Dir, File, Node};
+use crate::explorer::{Dir, File, Node};
 
 pub struct Notes {
-    root_path: Option<PathBuf>,
+    explorer_path: Option<PathBuf>,
 
     pub actions: Actions,
     pub dirs_tree: DirsTree,
     pub onglets: Onglets,
 
-    pub file_system: Option<Node>,
+    pub explorer: Option<Node>,
 
-    sender: Option<Sender<notify::Message>>,
+    watcher: Option<Sender<notify::Message>>,
 }
 
 #[derive(Debug, Clone)]
@@ -69,9 +69,9 @@ impl Application for Notes {
             actions: Actions::new(),
             dirs_tree: DirsTree::new(),
             onglets: Onglets::new(),
-            file_system: None,
-            sender: None,
-            root_path: root_path,
+            explorer: None,
+            watcher: None,
+            explorer_path: root_path,
         };
 
         
@@ -101,7 +101,7 @@ impl Application for Notes {
             Message::Loaded(res) => {
                 match res {
                     Ok(Node::Dir(dir_node)) => {
-                        self.file_system = Some(Node::Dir(dir_node));
+                        self.explorer = Some(Node::Dir(dir_node));
                     }
                     Err(error) => {
                         println!("{error}");
@@ -115,7 +115,7 @@ impl Application for Notes {
 
             Message::Actions(sub_message) => self.actions.update(sub_message),
             Message::DirsTree(sub_message) => {
-                self.dirs_tree.update(sub_message, &mut self.file_system, &mut self.sender)
+                self.dirs_tree.update(sub_message, &mut self.explorer, &mut self.watcher)
             }
             Message::Onglets(sub_message) => self.onglets.update(sub_message),
 
@@ -124,13 +124,13 @@ impl Application for Notes {
 
                 match sub_msg {
                     notify::Message::Waiting(mut sender) => {
-                        if let Some(path) = &self.root_path {
+                        if let Some(path) = &self.explorer_path {
                             let msg_to_send = notify::Message::Watch(path.clone());
                             sender.try_send(msg_to_send)
                                 .expect("error tring to send to watcher");
                         }
                         
-                        self.sender = Some(sender);
+                        self.watcher = Some(sender);
                     }
                     _ => {}
                 }
@@ -145,7 +145,7 @@ impl Application for Notes {
             .push(self.actions.view())
             .push(
                 Row::new()
-                    .push(self.dirs_tree.view(&self.file_system))
+                    .push(self.dirs_tree.view(&self.explorer))
                     .push(self.onglets.view(&self)),
             )
             .into()
@@ -158,7 +158,7 @@ use std::path;
 async fn load(path: PathBuf) -> Result<Node, String> {
 
 
-    match files_explorer::init_explorer(path) {
+    match explorer::init_explorer(path) {
         Ok(dir_node) => {
             //println!("{:?}", dir_node);
             

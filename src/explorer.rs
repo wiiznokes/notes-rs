@@ -12,6 +12,22 @@ use iced::futures::channel::mpsc::Sender;
 use crate::notify;
 
 
+
+pub struct Explorer {
+    pub files: Option<Node>,
+    pub root_path: Option<PathBuf>,
+
+    watcher: Option<Sender<notify::Message>>,
+}
+
+
+enum Message {
+    Loaded(Result<Node, String>),
+    Watcher(notify::Message)
+}
+
+
+
 #[derive(Debug, Clone)]
 pub struct Dir {
     pub path: PathBuf,
@@ -168,6 +184,9 @@ pub fn expand_dir(dir: &mut Dir, watcher: &mut Option<Sender<notify::Message>>) 
     }
 
 }
+
+
+
 
 
 fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), String> {
