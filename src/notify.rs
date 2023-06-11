@@ -1,12 +1,16 @@
-use futures::{channel::mpsc::Sender, SinkExt, StreamExt};
-use iced::futures::channel::mpsc;
-use iced::{subscription, Subscription};
-use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
+
 use std::path::PathBuf;
+use futures::{channel::mpsc::Sender, SinkExt, StreamExt};
+use iced::{subscription, Subscription};
+use iced::futures::channel::mpsc;
+use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
 
 #[derive(Clone, Debug)]
 pub enum Message {
-    Waiting(mpsc::Sender<Message>),
+    Waiting(Sender<Message>),
 
     Watch(PathBuf),
     StopWatch(PathBuf),

@@ -1,34 +1,30 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
 #![allow(unused_imports)]
-#![allow(unused_parens)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
 
-use iced::window::icon;
 use iced::{Alignment, Command};
 use iced::{Element, Length};
-
-use iced::widget::{column, row, Button, Column, Container, Text, TextInput};
+use iced::alignment;
+use iced::widget::{Button, column, Column, Container, row, Text, TextInput};
+use iced::window::icon;
 
 use crate::app::{self};
-
 use crate::icons;
 
-use iced::alignment;
-
 #[derive(Clone, Debug)]
-pub struct Onglets {}
+pub struct Tab {}
 
 #[derive(Clone, Debug)]
 pub enum Message {
     Close,
 }
 
-impl Onglets {
-    pub fn new() -> Onglets {
-        Onglets {}
+impl Tab {
+    pub fn new() -> Tab {
+        Tab {}
     }
 
-    pub fn update(&mut self, message: Message) -> iced::Command<app::Message> {
+    pub fn update(&mut self, message: Message) -> Command<app::Message> {
         match message {
             Message::Close => todo!(),
         }

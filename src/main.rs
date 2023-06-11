@@ -1,39 +1,26 @@
-#![allow(dead_code)]
+#![allow(unused_imports)]
 #![allow(unused_variables)]
+#![allow(dead_code)]
 
-use std::env;
+use iced::{Application, Settings};
 
-use iced::{Settings, Application};
-
+use app::Notes;
 
 mod app;
-use app::{Notes};
 
 mod actions;
 mod tree;
-mod onglets;
+mod tab;
 
 mod explorer;
 mod icons;
 mod notify;
 mod button;
-//mod context_menu;
 
-pub fn main() {
+pub fn main() -> iced::Result {
 
     //env::set_var("RUST_BACKTRACE", "full");
 
-    let args = env::args();
 
-   
-
-
-
-    
-
-
-
-   
-    Notes::run(Settings::default()).unwrap();
-
+    Notes::run(Settings::default())
 }

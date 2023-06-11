@@ -1,31 +1,28 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
 #![allow(unused_imports)]
-#![allow(unused_parens)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
 
 use std::env;
 use std::path::{Path, PathBuf};
+use std::path;
 
-use iced::futures::channel::mpsc::Sender;
 use iced::{executor, Subscription};
 use iced::{Application, Command};
-
-use crate::actions::{self, Actions};
-use crate::tree::{self, Tree};
-use crate::onglets::{self, Onglets};
-use crate::{explorer, notify};
-
-use iced::widget::{Column, Row};
 use iced::Element;
-
+use iced::futures::channel::mpsc::Sender;
+use iced::widget::{Column, Row};
 use iced::widget::Space;
 
+use crate::{explorer, notify};
+use crate::actions::{self, Actions};
 use crate::explorer::{Dir, Explorer, File, Node};
+use crate::tab::{self, Tab};
+use crate::tree::{self, Tree};
 
 pub struct Notes {
     pub actions: Actions,
     pub dirs_tree: Tree,
-    pub onglets: Onglets,
+    pub tab: Tab,
 
     pub explorer: Option<Explorer>,
 }
@@ -37,18 +34,18 @@ pub enum Message {
     Explorer(explorer::Message),
     Actions(actions::Message),
     DirsTree(tree::Message),
-    Onglets(onglets::Message),
+    Tab(tab::Message),
 }
 
 impl Application for Notes {
     type Executor = executor::Default;
-    type Flags = ();
     type Message = Message;
     type Theme = iced::Theme;
+    type Flags = ();
 
     fn new(_flags: ()) -> (Self, Command<Self::Message>) {
         let mut args = env::args();
-    
+
 
         let root_path = args.nth(1).map(PathBuf::from);
 
@@ -57,7 +54,7 @@ impl Application for Notes {
         let app = Notes {
             actions: Actions::new(),
             dirs_tree: Tree::new(),
-            onglets: Onglets::new(),
+            tab: Tab::new(),
             explorer: None,
         };
 
@@ -72,11 +69,6 @@ impl Application for Notes {
 
     fn title(&self) -> String {
         String::from("Notes")
-    }
-
-    fn subscription(&self) -> Subscription<Message> {
-        // todo: when we start the app without a path, we will never handle the Waiting call
-        notify::start_watcher().map(|msg| Message::Explorer(explorer::Message::Watcher(msg)))
     }
 
     fn update(&mut self, message: Message) -> Command<Self::Message> {
@@ -97,7 +89,7 @@ impl Application for Notes {
 
             Message::Actions(msg) => return self.actions.update(msg),
             Message::DirsTree(msg) => return self.dirs_tree.update(msg, &mut self.explorer),
-            Message::Onglets(msg) => return self.onglets.update(msg),
+            Message::Tab(msg) => return self.tab.update(msg),
         }
         Command::none()
     }
@@ -109,13 +101,16 @@ impl Application for Notes {
             .push(
                 Row::new()
                     .push(self.dirs_tree.view(&self.explorer))
-                    .push(self.onglets.view(self)),
+                    .push(self.tab.view(self)),
             )
             .into()
     }
-}
 
-use std::path;
+    fn subscription(&self) -> Subscription<Message> {
+        // todo: when we start the app without a path, we will never handle the Waiting call
+        notify::start_watcher().map(|msg| Message::Explorer(explorer::Message::Watcher(msg)))
+    }
+}
 
 async fn load(path: PathBuf) -> Result<Explorer, String> {
     Explorer::new(path)
