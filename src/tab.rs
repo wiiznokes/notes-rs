@@ -15,7 +15,7 @@ use crate::icons;
 pub struct Tab {}
 
 #[derive(Clone, Debug)]
-pub enum Message {
+pub enum TabMsg {
     Close,
 }
 
@@ -24,13 +24,13 @@ impl Tab {
         Tab {}
     }
 
-    pub fn update(&mut self, message: Message) -> Command<app::Message> {
+    pub fn update(&mut self, message: TabMsg) -> Command<app::AppMsg> {
         match message {
-            Message::Close => todo!(),
+            TabMsg::Close => todo!(),
         }
     }
 
-    pub fn view(&self, notes: &app::Notes) -> Element<app::Message> {
+    pub fn view(&self, notes: &app::Notes) -> Element<app::AppMsg> {
         let text = Text::new("hello")
             .width(Length::Fill)
             .height(Length::Fill)

@@ -16,12 +16,40 @@ pub struct Explorer {
     pub files: Node,
     pub root_path: PathBuf,
 
-    watcher: Option<Sender<notify::Message>>,
+    watcher: Option<Sender<notify::NtfMsg>>,
+}
+
+
+#[derive(Debug, Clone, Copy)]
+pub enum EntryType {
+    Dir,
+    File
 }
 
 #[derive(Debug, Clone)]
-pub enum Message {
-    Watcher(notify::Message),
+pub enum ActionType {
+    Ok,
+    Cancel
+}
+
+#[derive(Debug, Clone)]
+pub enum EditName {
+    Start(PathBuf, EntryType),
+    Stop(PathBuf, EntryType),
+    InputChanged(PathBuf, EntryType, String)
+}
+
+#[derive(Debug, Clone)]
+pub enum XplMsg {
+    Watcher(notify::NtfMsg),
+
+    New(PathBuf, EntryType),
+    Cut(PathBuf, EntryType),
+    Copy(PathBuf, EntryType),
+    Paste(PathBuf, EntryType),
+    EditName(EditName),
+
+    Expand(PathBuf),
 }
 
 #[derive(Debug, Clone)]
@@ -173,7 +201,7 @@ impl Explorer {
                 let res = fill_dir_content(&mut dir.content, &dir.path.clone());
 
                 if let Some(ref mut watcher) = self.watcher {
-                    let msg_to_send = notify::Message::Watch(dir.path.clone());
+                    let msg_to_send = notify::NtfMsg::Watch(dir.path.clone());
 
                     watcher
                         .try_send(msg_to_send)
@@ -187,24 +215,31 @@ impl Explorer {
         }
     }
 
-    pub fn handle_message(&mut self, message: Message) -> Command<Message> {
+    pub fn handle_message(&mut self, message: XplMsg) {
         match message {
-            Message::Watcher(msg) => match msg {
-                notify::Message::Waiting(mut watcher) => {
-                    let msg_to_send = notify::Message::Watch(self.root_path.clone());
+            XplMsg::Watcher(msg) => match msg {
+                notify::NtfMsg::Waiting(mut watcher) => {
+                    let msg_to_send = notify::NtfMsg::Watch(self.root_path.clone());
                     watcher
                         .try_send(msg_to_send)
                         .expect("error trying to send to watcher");
 
                     self.watcher = Some(watcher);
                 }
-                notify::Message::Event(_) => todo!(),
+                notify::NtfMsg::Event(_) => todo!(),
 
-                _ => panic!("should never happened"),
+                _ => panic!("{:?}", msg),
             },
+            XplMsg::New(_, _) => {}
+            XplMsg::Cut(_, _) => {}
+            XplMsg::Copy(_, _) => {}
+            XplMsg::Paste(_, _) => {}
+            XplMsg::EditName(_) => {}
+            XplMsg::Expand(path) => {
+                self.expand_dir(path).unwrap();
+            }
         }
 
-        Command::none()
     }
 }
 

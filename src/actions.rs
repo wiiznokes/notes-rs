@@ -28,7 +28,7 @@ pub struct Actions {
 }
 
 #[derive(Clone, Debug)]
-pub enum Message {
+pub enum ActMsg {
     Toggle,
     Search,
 
@@ -49,7 +49,7 @@ impl Actions {
         Actions { tt: 0 }
     }
 
-    pub fn update(&mut self, message: Message) -> Command<app::Message> {
+    pub fn update(&mut self, message: ActMsg) -> Command<app::AppMsg> {
         match message {
             _ => { println!("{:?}", message); }
         }
@@ -57,7 +57,7 @@ impl Actions {
         Command::none()
     }
 
-    pub fn view(&self) -> Element<app::Message> {
+    pub fn view(&self) -> Element<app::AppMsg> {
         let right_menu_trees = vec![
             toggle_menu(),
             search_menu(),
@@ -83,7 +83,7 @@ impl Actions {
 }
 
 
-fn new_menu_bar(menu_trees: Vec<MenuTree<app::Message, iced::Renderer>>) -> MenuBar<app::Message, iced::Renderer> {
+fn new_menu_bar(menu_trees: Vec<MenuTree<app::AppMsg, iced::Renderer>>) -> MenuBar<app::AppMsg, iced::Renderer> {
     MenuBar::new(menu_trees)
         .item_width(ItemWidth::Uniform(180))
         .item_height(ItemHeight::Uniform(25))
@@ -97,40 +97,40 @@ fn new_menu_bar(menu_trees: Vec<MenuTree<app::Message, iced::Renderer>>) -> Menu
         })
 }
 
-fn toggle_menu<'a>() -> MenuTree<'a, app::Message, iced::Renderer> {
-    let main_button = labeled_button("Toggle", app::Message::Actions(Message::Toggle));
+fn toggle_menu<'a>() -> MenuTree<'a, app::AppMsg, iced::Renderer> {
+    let main_button = labeled_button("Toggle", app::AppMsg::Actions(ActMsg::Toggle));
     MenuTree::new(main_button)
 }
 
-fn search_menu<'a>() -> MenuTree<'a, app::Message, iced::Renderer> {
-    let main_button = labeled_button("Search", app::Message::Actions(Message::Search));
+fn search_menu<'a>() -> MenuTree<'a, app::AppMsg, iced::Renderer> {
+    let main_button = labeled_button("Search", app::AppMsg::Actions(ActMsg::Search));
     MenuTree::new(main_button)
 }
 
 
-fn files_menu<'a>() -> MenuTree<'a, app::Message, iced::Renderer> {
-    let main_button = labeled_button("Files", app::Message::Actions(Message::None));
+fn files_menu<'a>() -> MenuTree<'a, app::AppMsg, iced::Renderer> {
+    let main_button = labeled_button("Files", app::AppMsg::Actions(ActMsg::None));
 
     let children = vec![
-        MenuTree::new(labeled_button("New File", app::Message::Actions(Message::NewFile))),
-        MenuTree::new(labeled_button("Open File", app::Message::Actions(Message::OpenFile))),
-        MenuTree::new(labeled_button("Open Folder", app::Message::Actions(Message::OpenFolder))),
-        MenuTree::new(labeled_button("Settings", app::Message::Actions(Message::Settings))),
-        MenuTree::new(labeled_button("Quit", app::Message::Actions(Message::Quit))),
+        MenuTree::new(labeled_button("New File", app::AppMsg::Actions(ActMsg::NewFile))),
+        MenuTree::new(labeled_button("Open File", app::AppMsg::Actions(ActMsg::OpenFile))),
+        MenuTree::new(labeled_button("Open Folder", app::AppMsg::Actions(ActMsg::OpenFolder))),
+        MenuTree::new(labeled_button("Settings", app::AppMsg::Actions(ActMsg::Settings))),
+        MenuTree::new(labeled_button("Quit", app::AppMsg::Actions(ActMsg::Quit))),
     ];
 
     MenuTree::with_children(main_button, children)
 }
 
 
-fn fetch_menu<'a>() -> MenuTree<'a, app::Message, iced::Renderer> {
-    let main_button = labeled_button("Fetch", app::Message::Actions(Message::Fetch));
+fn fetch_menu<'a>() -> MenuTree<'a, app::AppMsg, iced::Renderer> {
+    let main_button = labeled_button("Fetch", app::AppMsg::Actions(ActMsg::Fetch));
     MenuTree::new(main_button)
 }
 
 
-fn push_menu<'a>() -> MenuTree<'a, app::Message, iced::Renderer> {
-    let main_button = labeled_button("Push", app::Message::Actions(Message::Push));
+fn push_menu<'a>() -> MenuTree<'a, app::AppMsg, iced::Renderer> {
+    let main_button = labeled_button("Push", app::AppMsg::Actions(ActMsg::Push));
     MenuTree::new(main_button)
 }
 

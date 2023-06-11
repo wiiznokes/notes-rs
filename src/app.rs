@@ -28,18 +28,18 @@ pub struct Notes {
 }
 
 #[derive(Debug, Clone)]
-pub enum Message {
+pub enum AppMsg {
     Loaded(Result<Explorer, String>),
 
-    Explorer(explorer::Message),
-    Actions(actions::Message),
-    DirsTree(tree::Message),
-    Tab(tab::Message),
+    Explorer(explorer::XplMsg),
+    Actions(actions::ActMsg),
+    DirsTree(tree::TreeMsg),
+    Tab(tab::TabMsg),
 }
 
 impl Application for Notes {
     type Executor = executor::Default;
-    type Message = Message;
+    type Message = AppMsg;
     type Theme = iced::Theme;
     type Flags = ();
 
@@ -59,7 +59,7 @@ impl Application for Notes {
         };
 
         let command = if let Some(path) = root_path_clone {
-            Command::perform(load(path), Message::Loaded)
+            Command::perform(load(path), AppMsg::Loaded)
         } else {
             Command::none()
         };
@@ -71,14 +71,14 @@ impl Application for Notes {
         String::from("Notes")
     }
 
-    fn update(&mut self, message: Message) -> Command<Self::Message> {
+    fn update(&mut self, message: AppMsg) -> Command<Self::Message> {
         match message {
-            Message::Explorer(msg) => {
+            AppMsg::Explorer(msg) => {
                 if let Some(ref mut explorer) = self.explorer {
-                    return explorer.handle_message(msg).map(Message::Explorer);
+                    explorer.handle_message(msg);
                 }
             }
-            Message::Loaded(res) => match res {
+            AppMsg::Loaded(res) => match res {
                 Ok(explorer) => {
                     self.explorer = Some(explorer);
                 }
@@ -87,14 +87,14 @@ impl Application for Notes {
                 }
             },
 
-            Message::Actions(msg) => return self.actions.update(msg),
-            Message::DirsTree(msg) => return self.dirs_tree.update(msg, &mut self.explorer),
-            Message::Tab(msg) => return self.tab.update(msg),
+            AppMsg::Actions(msg) => return self.actions.update(msg),
+            AppMsg::DirsTree(msg) => return self.dirs_tree.update(msg, &mut self.explorer),
+            AppMsg::Tab(msg) => return self.tab.update(msg),
         }
         Command::none()
     }
 
-    fn view(&self) -> Element<Message> {
+    fn view(&self) -> Element<AppMsg> {
         Column::new()
             .push(Space::new(0, 5))
             .push(self.actions.view())
@@ -106,9 +106,9 @@ impl Application for Notes {
             .into()
     }
 
-    fn subscription(&self) -> Subscription<Message> {
+    fn subscription(&self) -> Subscription<AppMsg> {
         // todo: when we start the app without a path, we will never handle the Waiting call
-        notify::start_watcher().map(|msg| Message::Explorer(explorer::Message::Watcher(msg)))
+        notify::start_watcher().map(|msg| AppMsg::Explorer(explorer::XplMsg::Watcher(msg)))
     }
 }
 
