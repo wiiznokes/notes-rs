@@ -1,33 +1,33 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "cargo",
-			"label": "clippy",
-			"command": "clippy",
-			"problemMatcher": [
-				"$rustc"
-			],
-			"group": "build"
-		},
-		{
-			"type": "cargo",
-			"label": "clean",
-			"command": "clean",
-			"problemMatcher": [
-				"$rustc"
-			],
-			"group": "clean"
-		},
-		{
-			"type": "cargo",
-			"command": "build",
-			"problemMatcher": [
-				"$rustc",
-				"$rust-panic"
-			],
-			"group": "build",
-			"label": "rust: cargo build"
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "cargo",
+      "label": "clippy",
+      "command": "clippy",
+      "problemMatcher": [
+        "$rustc"
+      ],
+      "group": "build"
+    },
+    {
+      "type": "cargo",
+      "label": "clean",
+      "command": "clean",
+      "problemMatcher": [
+        "$rustc"
+      ],
+      "group": "clean"
+    },
+    {
+      "type": "cargo",
+      "command": "build",
+      "problemMatcher": [
+        "$rustc",
+        "$rust-panic"
+      ],
+      "group": "build",
+      "label": "rust: cargo build"
+    }
+  ]
 }

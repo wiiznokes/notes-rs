@@ -1,14 +1,13 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
 #![allow(unused_imports)]
-#![allow(unused_parens)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
 
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Iter, Path, PathBuf};
 
-use iced::futures::channel::mpsc::Sender;
 use iced::Command;
+use iced::futures::channel::mpsc::Sender;
 
 use crate::notify;
 
@@ -17,12 +16,40 @@ pub struct Explorer {
     pub files: Node,
     pub root_path: PathBuf,
 
-    watcher: Option<Sender<notify::Message>>,
+    watcher: Option<Sender<notify::NtfMsg>>,
+}
+
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EntryType {
+    Dir,
+    File
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ActionType {
+    Ok,
+    Cancel
 }
 
 #[derive(Debug, Clone)]
-pub enum Message {
-    Watcher(notify::Message),
+pub enum EditName {
+    Start(PathBuf, EntryType),
+    Stop(PathBuf, EntryType, ActionType),
+    InputChanged(PathBuf, EntryType, String)
+}
+
+#[derive(Debug, Clone)]
+pub enum XplMsg {
+    Watcher(notify::NtfMsg),
+
+    New(PathBuf, EntryType),
+    Cut(PathBuf, EntryType),
+    Copy(PathBuf, EntryType),
+    Paste(PathBuf, EntryType),
+    EditName(EditName),
+
+    Expand(PathBuf),
 }
 
 #[derive(Debug, Clone)]
@@ -122,12 +149,14 @@ impl Explorer {
     ///
     /// Condition: root_path is a dir
     pub fn new(path: PathBuf) -> Result<Self, String> {
-        is_dir_exist(&path)?;
+        if !is_dir_exist(&path).unwrap_or(false) {
+            return Err(format!("path {} is not a directory", path.to_string_lossy()));
+        };
 
         let dir_name = match path.file_name() {
             Some(name) => name.to_string_lossy().to_string(),
             None => {
-                if (path.to_string_lossy() == "/") {
+                if path.to_string_lossy() == "/" {
                     "/".to_string()
                 } else {
                     return Err(format!(
@@ -172,11 +201,11 @@ impl Explorer {
                 let res = fill_dir_content(&mut dir.content, &dir.path.clone());
 
                 if let Some(ref mut watcher) = self.watcher {
-                    let msg_to_send = notify::Message::Watch(dir.path.clone());
+                    let msg_to_send = notify::NtfMsg::Watch(dir.path.clone());
 
                     watcher
                         .try_send(msg_to_send)
-                        .expect("error tring to send to watcher");
+                        .expect("error trying to send to watcher");
                 }
                 dir.has_been_expanded = true;
                 res
@@ -186,24 +215,78 @@ impl Explorer {
         }
     }
 
-    pub fn handle_message(&mut self, message: Message) -> Command<Message> {
+    pub fn edit_name(&mut self, edit_name: EditName) {
+
+        println!("{:?}", edit_name);
+
+        match edit_name {
+            EditName::Start(path, entry_type) => {
+                let node = search_node_by_path(&mut self.files, path, entry_type == EntryType::Dir).unwrap();
+
+                match node {
+                    Node::Dir(dir) => { dir.name_cached = dir.name.clone(); dir.is_name_is_edited = true; },
+                    Node::File(file) => { file.name_cached = file.name.clone(); file.is_name_is_edited = true; },
+                }
+            }
+            EditName::Stop(path, entry_type, action_type) => {
+                let node = search_node_by_path(&mut self.files, path, entry_type == EntryType::Dir).unwrap();
+
+                match node {
+                    Node::Dir(dir) => {
+                        if action_type == ActionType::Ok {
+                            dir.name = dir.name_cached.clone();
+                        }
+                        dir.is_name_is_edited = false;
+                    }
+                    Node::File(file) => {
+                        if action_type == ActionType::Ok {
+                            file.name = file.name_cached.clone();
+                        }
+                        file.is_name_is_edited = false;
+                    }
+                }
+            }
+            EditName::InputChanged(path, entry_type, value) => {
+                let node = search_node_by_path(&mut self.files, path, entry_type == EntryType::Dir).unwrap();
+
+                match node {
+                    Node::Dir(dir) => { dir.name_cached = value; },
+                    Node::File(file) => { file.name_cached = value; },
+                }
+            }
+        }
+
+    }
+
+
+
+    pub fn handle_message(&mut self, message: XplMsg) {
         match message {
-            Message::Watcher(msg) => match msg {
-                notify::Message::Waiting(mut watcher) => {
-                    let msg_to_send = notify::Message::Watch(self.root_path.clone());
+            XplMsg::Watcher(msg) => match msg {
+                notify::NtfMsg::Waiting(mut watcher) => {
+                    let msg_to_send = notify::NtfMsg::Watch(self.root_path.clone());
                     watcher
                         .try_send(msg_to_send)
-                        .expect("error tring to send to watcher");
+                        .expect("error trying to send to watcher");
 
                     self.watcher = Some(watcher);
                 }
-                notify::Message::Event(_) => todo!(),
+                notify::NtfMsg::Event(_) => todo!(),
 
-                _ => panic!("should never happend"),
+                _ => panic!("{:?}", msg),
             },
+            XplMsg::New(_, _) => {}
+            XplMsg::Cut(_, _) => {}
+            XplMsg::Copy(_, _) => {}
+            XplMsg::Paste(_, _) => {}
+            XplMsg::EditName(edit_name) => {
+                self.edit_name(edit_name);
+            }
+            XplMsg::Expand(path) => {
+                self.expand_dir(path).unwrap();
+            }
         }
 
-        Command::none()
     }
 }
 
@@ -212,10 +295,10 @@ fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), Strin
         Ok(entries) => entries,
         Err(error) => {
             return Err(format!(
-                "Erreur lors de la lecture de {}: {}",
+                "Error when reading {}: {}",
                 path.display(),
                 error
-            ))
+            ));
         }
     };
 
@@ -226,23 +309,23 @@ fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), Strin
 
                 if !entry_path.is_dir() && !entry_path.is_file() {
                     println!(
-                        "spécial file or dir have been passed: {}",
+                        "special file or dir have been passed: {}",
                         entry_path.display()
                     );
                     continue;
                 }
 
-                let node = if entry_path.is_dir() {
-                    let entry_name = match entry_path.clone().file_name() {
-                        Some(name) => name.to_string_lossy().to_string(),
-                        None => {
-                            return Err(format!(
-                                "can't read the name of the path {}",
-                                entry_path.to_string_lossy()
-                            ));
-                        }
-                    };
+                let entry_name = match entry_path.clone().file_name() {
+                    Some(name) => name.to_string_lossy().to_string(),
+                    None => {
+                        return Err(format!(
+                            "can't read the name of the path {}",
+                            entry_path.to_string_lossy()
+                        ));
+                    }
+                };
 
+                let node = if entry_path.is_dir() {
                     Node::Dir(Dir {
                         path: entry_path,
                         name: entry_name,
@@ -256,15 +339,6 @@ fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), Strin
                         .to_string_lossy()
                         .to_string();
 
-                    let entry_name = match entry_path.clone().file_name() {
-                        Some(name) => name.to_string_lossy().to_string(),
-                        None => {
-                            return Err(format!(
-                                "can't read the name of the path {}",
-                                entry_path.to_string_lossy()
-                            ));
-                        }
-                    };
 
                     Node::File(File {
                         extension: entry_extension,
@@ -280,17 +354,17 @@ fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), Strin
                             "can't insert {} in {}. name already exist in content",
                             node.name(),
                             node.path().to_string_lossy()
-                        ))
+                        ));
                     }
                     Err(index) => content.insert(index, node),
                 }
             }
             Err(error) => {
                 return Err(format!(
-                    "Erreur lors de la lecture du contenu de {}: {}",
+                    "error when reading the content of {}: {}",
                     path.display(),
                     error
-                ))
+                ));
             }
         }
     }
@@ -298,17 +372,14 @@ fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), Strin
     Ok(())
 }
 
-// Vérifie si le chemin est un répertoire existant
-pub fn is_dir_exist(path: &PathBuf) -> Result<(), String> {
+// return true if the node is a dir
+pub fn is_dir_exist(path: &PathBuf) -> Result<bool, String> {
     match fs::metadata(path) {
         Ok(metadata) => {
             if metadata.is_dir() {
-                Ok(())
+                Ok(true)
             } else {
-                Err(format!(
-                    "error: {} n'est pas un répertoire.",
-                    path.display()
-                ))
+                Ok(false)
             }
         }
         Err(error) => Err(format!(
@@ -319,16 +390,15 @@ pub fn is_dir_exist(path: &PathBuf) -> Result<(), String> {
     }
 }
 
-/// If the value is found then [`Result::Ok`] is returned, containing the index of the matching element.
-/// If the value is not found then [`Result::Err`] is returned,
+/// If the value is found then [`Ok`] is returned, containing the index of the matching element.
+/// If the value is not found then [`Err`] is returned,
 /// containing the index where a matching element could be inserted while maintaining sorted order
 ///
-/// The sortage follow this rules:
+/// Sorting follow this rules:
 /// - all directory before files
 /// - alpha numeric (ASCII), with case insensitive (a = A)
 ///
 /// Condition: content must be sorted with this rules before using this function
-#[must_use]
 fn get_index_sorted(name: String, is_dir: bool, content: &Vec<Node>) -> Result<usize, usize> {
     // notice we use negation when node is a dir
     // because 0 will have a smaller index than 1
@@ -336,7 +406,7 @@ fn get_index_sorted(name: String, is_dir: bool, content: &Vec<Node>) -> Result<u
     // we lower all letter because 'A' < '_' < 'a' in ASCII, and
     // I prefer having '.' and '_' files on top
 
-    // we use a third key in case of egality, because Linux is sensitive (a != A)
+    // we use a third key in case of equality, because Linux is sensitive (a != A)
     content.binary_search_by_key(&(!is_dir, name.to_lowercase(), name), |n| {
         (!n.is_dir(), n.name().to_lowercase(), n.name())
     })
@@ -349,7 +419,7 @@ pub fn search_node_by_path(
 ) -> Result<&mut Node, String> {
     if !root_node.is_dir() {
         return Err(format!(
-            "tring to search a node: {} with a file",
+            "trying to search a node: {} with a file",
             search_path.to_string_lossy()
         ));
     }
@@ -369,12 +439,12 @@ pub fn search_node_by_path(
                     "path: {} is not contain in root path {}",
                     search_path.to_string_lossy(),
                     root_dir_path.to_string_lossy()
-                ))
+                ));
             }
         };
         iter_index += 1;
 
-        if (root_part != search_path_part) {
+        if root_part != search_path_part {
             return Err(format!(
                 "path: {} is not contain in root path {}",
                 search_path.to_string_lossy(),
@@ -407,30 +477,30 @@ pub fn search_node_by_path(
                             "{} was not found in content of {}",
                             search_path_part.to_string_lossy(),
                             dir.path.to_string_lossy()
-                        ))
+                        ));
                     }
                 };
 
                 current_node = &mut dir.content[node_index];
             }
             Node::File(file) => {
-                if search_path_part.to_string_lossy() == file.name {
+                return if search_path_part.to_string_lossy() == file.name {
                     if search_path_iter.next().is_none() {
-                        return Ok(current_node);
+                        Ok(current_node)
                     } else {
-                        return Err(format!(
+                        Err(format!(
                             "{} is a file, but it's not the end off the path",
                             search_path_part.to_string_lossy()
-                        ));
+                        ))
                     }
                 } else {
-                    return Err(format!(
+                    Err(format!(
                         "file {} is not equal to this file {} in {}",
                         search_path_part.to_string_lossy(),
                         file.name,
                         file.path.to_string_lossy()
-                    ));
-                }
+                    ))
+                };
             }
         };
     }

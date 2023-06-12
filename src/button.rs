@@ -1,7 +1,8 @@
-use iced::{Element, widget::{button, text}, Color, Length, alignment};
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
 
-
-
+use iced::{alignment, Color, Element, Length, widget::{button, text}};
 
 pub fn base_button<'a, T>(
     content: impl Into<Element<'a, T, iced::Renderer>>,
@@ -25,8 +26,8 @@ pub fn labeled_button<'a, T>(label: &str, msg: T) -> button::Button<'a, T, iced:
 }
 
 
-
 struct ButtonStyle;
+
 impl button::StyleSheet for ButtonStyle {
     type Style = iced::Theme;
 

@@ -1,40 +1,36 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
 #![allow(unused_imports)]
-#![allow(unused_parens)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
 
-use iced::window::icon;
 use iced::{Alignment, Command};
 use iced::{Element, Length};
-
-use iced::widget::{column, row, Button, Column, Container, Text, TextInput};
+use iced::alignment;
+use iced::widget::{Button, column, Column, Container, row, Text, TextInput};
+use iced::window::icon;
 
 use crate::app::{self};
-
 use crate::icons;
 
-use iced::alignment;
+#[derive(Clone, Debug)]
+pub struct Tab {}
 
 #[derive(Clone, Debug)]
-pub struct Onglets {}
-
-#[derive(Clone, Debug)]
-pub enum Message {
+pub enum TabMsg {
     Close,
 }
 
-impl Onglets {
-    pub fn new() -> Onglets {
-        Onglets {}
+impl Tab {
+    pub fn new() -> Tab {
+        Tab {}
     }
 
-    pub fn update(&mut self, message: Message) -> iced::Command<app::Message> {
+    pub fn update(&mut self, message: TabMsg) -> Command<app::AppMsg> {
         match message {
-            Message::Close => todo!(),
+            TabMsg::Close => todo!(),
         }
     }
 
-    pub fn view(&self, notes: &app::Notes) -> Element<app::Message> {
+    pub fn view(&self, notes: &app::Notes) -> Element<app::AppMsg> {
         let text = Text::new("hello")
             .width(Length::Fill)
             .height(Length::Fill)

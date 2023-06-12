@@ -11,8 +11,14 @@ rust-version = "1.70.0"
 iced = "0.9"
 notify = "6.0.0"
 futures = "0.3.28"
-iced_aw = { version = "0.5.2", features = [
+
+[dependencies.iced_aw]
+#version = "0.5.2"
+git = "https://github.com/wiiznokes/iced_aw.git"
+branch = "dev-context-menu"
+features = [
     "menu",
     "quad",
-    "icon_text"
-] }
+    "icon_text",
+    "context_menu"
+] 

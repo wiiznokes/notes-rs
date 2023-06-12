@@ -1,54 +1,51 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
 #![allow(unused_imports)]
-#![allow(unused_parens)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
 
 use std::env;
 use std::path::{Path, PathBuf};
+use std::path;
 
-use iced::futures::channel::mpsc::Sender;
 use iced::{executor, Subscription};
 use iced::{Application, Command};
-
-use crate::actions::{self, Actions};
-use crate::tree::{self, Tree};
-use crate::onglets::{self, Onglets};
-use crate::{explorer, notify};
-
-use iced::widget::{Column, Row};
 use iced::Element;
-
+use iced::futures::channel::mpsc::Sender;
+use iced::widget::{Column, Row};
 use iced::widget::Space;
 
+use crate::{explorer, notify};
+use crate::actions::{self, Actions};
 use crate::explorer::{Dir, Explorer, File, Node};
+use crate::tab::{self, Tab};
+use crate::tree::{self, Tree};
 
 pub struct Notes {
     pub actions: Actions,
     pub dirs_tree: Tree,
-    pub onglets: Onglets,
+    pub tab: Tab,
 
     pub explorer: Option<Explorer>,
 }
 
 #[derive(Debug, Clone)]
-pub enum Message {
+pub enum AppMsg {
     Loaded(Result<Explorer, String>),
 
-    Explorer(explorer::Message),
-    Actions(actions::Message),
-    DirsTree(tree::Message),
-    Onglets(onglets::Message),
+    Explorer(explorer::XplMsg),
+    Actions(actions::ActMsg),
+    DirsTree(tree::TreeMsg),
+    Tab(tab::TabMsg),
 }
 
 impl Application for Notes {
     type Executor = executor::Default;
-    type Flags = ();
-    type Message = Message;
+    type Message = AppMsg;
     type Theme = iced::Theme;
+    type Flags = ();
 
     fn new(_flags: ()) -> (Self, Command<Self::Message>) {
         let mut args = env::args();
-    
+
 
         let root_path = args.nth(1).map(PathBuf::from);
 
@@ -57,12 +54,12 @@ impl Application for Notes {
         let app = Notes {
             actions: Actions::new(),
             dirs_tree: Tree::new(),
-            onglets: Onglets::new(),
+            tab: Tab::new(),
             explorer: None,
         };
 
         let command = if let Some(path) = root_path_clone {
-            Command::perform(load(path), Message::Loaded)
+            Command::perform(load(path), AppMsg::Loaded)
         } else {
             Command::none()
         };
@@ -74,19 +71,14 @@ impl Application for Notes {
         String::from("Notes")
     }
 
-    fn subscription(&self) -> Subscription<Message> {
-        // todo: when we start the app without a path, we will never handle the Waiting call
-        notify::start_watcher().map(|msg| Message::Explorer(explorer::Message::Watcher(msg)))
-    }
-
-    fn update(&mut self, message: Message) -> Command<Self::Message> {
+    fn update(&mut self, message: AppMsg) -> Command<Self::Message> {
         match message {
-            Message::Explorer(msg) => {
+            AppMsg::Explorer(msg) => {
                 if let Some(ref mut explorer) = self.explorer {
-                    return explorer.handle_message(msg).map(Message::Explorer);
+                    explorer.handle_message(msg);
                 }
             }
-            Message::Loaded(res) => match res {
+            AppMsg::Loaded(res) => match res {
                 Ok(explorer) => {
                     self.explorer = Some(explorer);
                 }
@@ -95,27 +87,30 @@ impl Application for Notes {
                 }
             },
 
-            Message::Actions(msg) => return self.actions.update(msg),
-            Message::DirsTree(msg) => return self.dirs_tree.update(msg, &mut self.explorer),
-            Message::Onglets(msg) => return self.onglets.update(msg),
+            AppMsg::Actions(msg) => return self.actions.update(msg),
+            AppMsg::DirsTree(msg) => return self.dirs_tree.update(msg, &mut self.explorer),
+            AppMsg::Tab(msg) => return self.tab.update(msg),
         }
         Command::none()
     }
 
-    fn view(&self) -> Element<Message> {
+    fn view(&self) -> Element<AppMsg> {
         Column::new()
             .push(Space::new(0, 5))
             .push(self.actions.view())
             .push(
                 Row::new()
                     .push(self.dirs_tree.view(&self.explorer))
-                    .push(self.onglets.view(self)),
+                    .push(self.tab.view(self)),
             )
             .into()
     }
-}
 
-use std::path;
+    fn subscription(&self) -> Subscription<AppMsg> {
+        // todo: when we start the app without a path, we will never handle the Waiting call
+        notify::start_watcher().map(|msg| AppMsg::Explorer(explorer::XplMsg::Watcher(msg)))
+    }
+}
 
 async fn load(path: PathBuf) -> Result<Explorer, String> {
     Explorer::new(path)

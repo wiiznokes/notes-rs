@@ -1,16 +1,10 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
 #![allow(unused_imports)]
-#![allow(unused_parens)]
-
-
-
-use iced::Font::{self};
+#![allow(unused_variables)]
+#![allow(dead_code)]
 
 use iced::alignment;
-use iced::theme::TextInput;
+use iced::Font::{self};
 use iced::widget::{Text, text};
-
 
 // Fonts
 const ICONS: Font = Font::External {
@@ -25,8 +19,6 @@ fn icon(unicode: char) -> Text<'static> {
         .horizontal_alignment(alignment::Horizontal::Center)
         .size(15)
 }
-
-
 
 
 pub fn file_icon() -> Text<'static> {
