@@ -75,7 +75,7 @@ impl Application for Notes {
         match message {
             AppMsg::Explorer(msg) => {
                 if let Some(ref mut explorer) = self.explorer {
-                    explorer.handle_message(msg);
+                    explorer.handle_message(msg).unwrap();
                 }
             }
             AppMsg::Loaded(res) => match res {

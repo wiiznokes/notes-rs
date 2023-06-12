@@ -14,7 +14,7 @@ use iced::widget::scrollable::Properties;
 use iced_aw::ContextMenu;
 
 use crate::app::{self, AppMsg};
-use crate::explorer::{ActionType, Dir, EditName, EntryType, Explorer, File, Node, search_node_by_path, XplMsg};
+use crate::explorer::{ActionType, Dir, Explorer, File, Node, search_node_by_path, XplMsg, PathId, EditNameType};
 use crate::{explorer, icons};
 use crate::notify;
 
@@ -111,9 +111,9 @@ impl Tree {
                 .width(Length::Fill)
                 .size(15)
                 .on_input(|value| {
-                    AppMsg::Explorer(XplMsg::EditName(EditName::InputChanged(file.path.clone(), EntryType::File, value)))
+                    AppMsg::Explorer(XplMsg::EditName(PathId { path: file.path.clone(), is_dir: false }, EditNameType::InputChanged(value)))
                 })
-                .on_submit(AppMsg::Explorer(XplMsg::EditName(EditName::Stop(file.path.clone(), EntryType::File, ActionType::Ok))))
+                .on_submit(AppMsg::Explorer(XplMsg::EditName(PathId { path: file.path.clone(), is_dir: false }, EditNameType::Stop(ActionType::Ok))))
                 .into()
         } else {
             Text::new(&file.name).width(Length::Fill).size(15).into()
@@ -121,19 +121,20 @@ impl Tree {
 
 
 
-        context_menu(icon.into(), name.into(), file.path.clone(), EntryType::File, indent).into()
+        context_menu(icon.into(), name.into(), file.path.clone(), false, indent).into()
 
     }
 
 
     fn dir_line(dir: &Dir, indent: f32) -> Element<AppMsg> {
 
+        let msg_icon = AppMsg::Explorer(XplMsg::Expand(PathId { path: dir.path.clone(), is_dir: true }));
         let icon = if dir.is_expanded {
             Button::new(icons::chevron_down_icon())
-                .on_press(AppMsg::Explorer(XplMsg::Expand(dir.path.clone())))
+                .on_press(msg_icon)
         } else {
             Button::new(icons::chevron_right_icon())
-                .on_press(AppMsg::Explorer(XplMsg::Expand(dir.path.clone())))
+                .on_press(msg_icon)
         };
 
         let name: Element<AppMsg> = if dir.is_name_is_edited {
@@ -141,23 +142,23 @@ impl Tree {
                 .width(Length::Fill)
                 .size(15)
                 .on_input(|value| {
-                    AppMsg::Explorer(XplMsg::EditName(EditName::InputChanged(dir.path.clone(), EntryType::Dir, value)))
+                    AppMsg::Explorer(XplMsg::EditName(PathId { path: dir.path.clone(), is_dir: true }, EditNameType::InputChanged(value)))
                 })
-                .on_submit(AppMsg::Explorer(XplMsg::EditName(EditName::Stop(dir.path.clone(), EntryType::Dir, ActionType::Ok))))
+                .on_submit(AppMsg::Explorer(XplMsg::EditName(PathId { path: dir.path.clone(), is_dir: true }, EditNameType::Stop(ActionType::Ok))))
                 .into()
         } else {
             Text::new(&dir.name).width(Length::Fill).size(15).into()
         };
 
 
-        context_menu(icon.into(), name.into(), dir.path.clone(), EntryType::File, indent).into()
+        context_menu(icon.into(), name.into(), dir.path.clone(), true, indent).into()
 
     }
 
 }
 
 
-fn context_menu<'a>(icon: Element<'a, AppMsg>, name: Element<'a, AppMsg>, path: PathBuf, entry_type: EntryType, indent: f32) ->  Element<'a, AppMsg> {
+fn context_menu<'a>(icon: Element<'a, AppMsg>, name: Element<'a, AppMsg>, path: PathBuf, is_dir: bool, indent: f32) ->  Element<'a, AppMsg> {
 
     let underlay = Row::new()
         .push(Space::new(Length::Fixed(indent), 0))
@@ -169,17 +170,17 @@ fn context_menu<'a>(icon: Element<'a, AppMsg>, name: Element<'a, AppMsg>, path: 
     ContextMenu::new(underlay, move ||
         column(vec![
             Button::new(Text::new("New File")).on_press(
-                AppMsg::Explorer(XplMsg::New(path.clone(), EntryType::File))).into(),
+                AppMsg::Explorer(XplMsg::New(PathId { path: path.clone(), is_dir: false } ))).into(),
             Button::new(Text::new("New Dir")).on_press(
-                AppMsg::Explorer(XplMsg::New(path.clone(), EntryType::Dir))).into(),
+                AppMsg::Explorer(XplMsg::New(PathId { path: path.clone(), is_dir: true } ))).into(),
             Button::new(Text::new("Cut")).on_press(
-                AppMsg::Explorer(XplMsg::Cut(path.clone(), entry_type))).into(),
+                AppMsg::Explorer(XplMsg::Cut(PathId { path: path.clone(), is_dir: is_dir } ))).into(),
             Button::new(Text::new("Copy")).on_press(
-                AppMsg::Explorer(XplMsg::Copy(path.clone(), entry_type))).into(),
+                AppMsg::Explorer(XplMsg::Copy(PathId { path: path.clone(), is_dir: is_dir }))).into(),
             Button::new(Text::new("Paste")).on_press(
-                AppMsg::Explorer(XplMsg::Paste(path.clone(), entry_type))).into(),
+                AppMsg::Explorer(XplMsg::Paste(PathId { path: path.clone(), is_dir: is_dir }))).into(),
             Button::new(Text::new("Rename")).on_press(
-                AppMsg::Explorer(XplMsg::EditName(EditName::Start(path.clone(), entry_type)))).into(),
+                AppMsg::Explorer(XplMsg::EditName(PathId { path: path.clone(), is_dir: is_dir }, EditNameType::Start))).into(),
         ]).into()
     ).into()
 }

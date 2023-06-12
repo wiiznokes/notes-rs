@@ -20,11 +20,6 @@ pub struct Explorer {
 }
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EntryType {
-    Dir,
-    File
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ActionType {
@@ -33,23 +28,30 @@ pub enum ActionType {
 }
 
 #[derive(Debug, Clone)]
-pub enum EditName {
-    Start(PathBuf, EntryType),
-    Stop(PathBuf, EntryType, ActionType),
-    InputChanged(PathBuf, EntryType, String)
+pub enum EditNameType {
+    Start,
+    Stop(ActionType),
+    InputChanged(String)
 }
+
+#[derive(Debug, Clone)]
+pub struct PathId {
+    pub path: PathBuf,
+    pub is_dir: bool
+}
+
 
 #[derive(Debug, Clone)]
 pub enum XplMsg {
     Watcher(notify::NtfMsg),
 
-    New(PathBuf, EntryType),
-    Cut(PathBuf, EntryType),
-    Copy(PathBuf, EntryType),
-    Paste(PathBuf, EntryType),
-    EditName(EditName),
+    New(PathId),
+    Cut(PathId),
+    Copy(PathId),
+    Paste(PathId),
+    EditName(PathId, EditNameType),
 
-    Expand(PathBuf),
+    Expand(PathId),
 }
 
 #[derive(Debug, Clone)]
@@ -129,6 +131,22 @@ impl Node {
         }
     }
 
+    pub fn name_cached(&self) -> String {
+        match &self {
+            Node::Dir(dir) => dir.name_cached.clone(),
+            Node::File(file) => file.name_cached.clone(),
+        }
+    }
+
+    pub fn is_name_is_edited(&self) -> bool {
+        match &self {
+            Node::Dir(dir) => dir.is_name_is_edited.clone(),
+            Node::File(file) => file.is_name_is_edited.clone(),
+        }
+    }
+
+
+
     pub fn to_dir(&self) -> Result<&Dir, String> {
         match self {
             Node::Dir(dir) => Ok(dir),
@@ -189,8 +207,8 @@ impl Explorer {
         })
     }
 
-    pub fn expand_dir(&mut self, path: PathBuf) -> Result<(), String> {
-        let node = search_node_by_path(&mut self.files, path, true).unwrap();
+    pub fn expand_dir(&mut self, path_id: PathId) -> Result<(), String> {
+        let node = search_node_by_path(&mut self.files, path_id).unwrap();
 
         if let Node::Dir(dir) = node {
             dir.is_expanded = !dir.is_expanded;
@@ -215,21 +233,22 @@ impl Explorer {
         }
     }
 
-    pub fn edit_name(&mut self, edit_name: EditName) {
+    pub fn edit_name(&mut self, path_id: PathId, edit_name: EditNameType) -> Result<(), String> {
 
-        println!("{:?}", edit_name);
+        let node = match search_node_by_path(&mut self.files, path_id) {
+            Ok(node) => node,
+            Err(e) => return Err(e)
+        };
 
         match edit_name {
-            EditName::Start(path, entry_type) => {
-                let node = search_node_by_path(&mut self.files, path, entry_type == EntryType::Dir).unwrap();
+            EditNameType::Start => {
 
                 match node {
                     Node::Dir(dir) => { dir.name_cached = dir.name.clone(); dir.is_name_is_edited = true; },
                     Node::File(file) => { file.name_cached = file.name.clone(); file.is_name_is_edited = true; },
                 }
             }
-            EditName::Stop(path, entry_type, action_type) => {
-                let node = search_node_by_path(&mut self.files, path, entry_type == EntryType::Dir).unwrap();
+            EditNameType::Stop(action_type) => {
 
                 match node {
                     Node::Dir(dir) => {
@@ -246,28 +265,31 @@ impl Explorer {
                     }
                 }
             }
-            EditName::InputChanged(path, entry_type, value) => {
-                let node = search_node_by_path(&mut self.files, path, entry_type == EntryType::Dir).unwrap();
+            EditNameType::InputChanged(value) => {
 
                 match node {
                     Node::Dir(dir) => { dir.name_cached = value; },
                     Node::File(file) => { file.name_cached = value; },
                 }
             }
+
         }
+        Ok(())
 
     }
 
 
 
-    pub fn handle_message(&mut self, message: XplMsg) {
+    pub fn handle_message(&mut self, message: XplMsg) -> Result<(), String> {
         match message {
             XplMsg::Watcher(msg) => match msg {
                 notify::NtfMsg::Waiting(mut watcher) => {
+
                     let msg_to_send = notify::NtfMsg::Watch(self.root_path.clone());
-                    watcher
-                        .try_send(msg_to_send)
-                        .expect("error trying to send to watcher");
+
+                    if let Err(e) = watcher.try_send(msg_to_send) {
+                        return Err(e.to_string());
+                    }
 
                     self.watcher = Some(watcher);
                 }
@@ -275,17 +297,22 @@ impl Explorer {
 
                 _ => panic!("{:?}", msg),
             },
-            XplMsg::New(_, _) => {}
-            XplMsg::Cut(_, _) => {}
-            XplMsg::Copy(_, _) => {}
-            XplMsg::Paste(_, _) => {}
-            XplMsg::EditName(edit_name) => {
-                self.edit_name(edit_name);
+            XplMsg::New(_) => {}
+            XplMsg::Cut(_) => {}
+            XplMsg::Copy(_) => {}
+            XplMsg::Paste(_) => {}
+            XplMsg::EditName(path_id, edit_name) => {
+                if let Err(e) = self.edit_name(path_id, edit_name) {
+                    return Err(e.to_string());
+                }
             }
-            XplMsg::Expand(path) => {
-                self.expand_dir(path).unwrap();
+            XplMsg::Expand(path_id) => {
+                if let Err(e) = self.expand_dir(path_id) {
+                    return Err(e.to_string());
+                }
             }
         }
+        Ok(())
 
     }
 }
@@ -414,21 +441,20 @@ fn get_index_sorted(name: String, is_dir: bool, content: &Vec<Node>) -> Result<u
 
 pub fn search_node_by_path(
     root_node: &mut Node,
-    search_path: PathBuf,
-    is_dir: bool,
+    path_id: PathId
 ) -> Result<&mut Node, String> {
     if !root_node.is_dir() {
         return Err(format!(
             "trying to search a node: {} with a file",
-            search_path.to_string_lossy()
+            path_id.path.to_string_lossy()
         ));
     }
 
     let root_dir_path = root_node.path();
 
-    let search_path_count = search_path.components().count();
+    let search_path_count = path_id.path.components().count();
     let mut iter_index = 0;
-    let mut search_path_iter = search_path.iter();
+    let mut search_path_iter = path_id.path.iter();
 
     // make sure /a/b/c/d is in /a/b/c
     for root_part in root_dir_path.iter() {
@@ -437,7 +463,7 @@ pub fn search_node_by_path(
             None => {
                 return Err(format!(
                     "path: {} is not contain in root path {}",
-                    search_path.to_string_lossy(),
+                    path_id.path.to_string_lossy(),
                     root_dir_path.to_string_lossy()
                 ));
             }
@@ -447,7 +473,7 @@ pub fn search_node_by_path(
         if root_part != search_path_part {
             return Err(format!(
                 "path: {} is not contain in root path {}",
-                search_path.to_string_lossy(),
+                path_id.path.to_string_lossy(),
                 root_dir_path.to_string_lossy()
             ));
         }
@@ -460,7 +486,7 @@ pub fn search_node_by_path(
 
         match current_node {
             Node::Dir(dir) => {
-                let current_search_path_is_dir = if is_dir {
+                let current_search_path_is_dir = if path_id.is_dir {
                     true
                 } else {
                     iter_index != search_path_count
