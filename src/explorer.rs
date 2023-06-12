@@ -146,6 +146,9 @@ impl Node {
     }
 
 
+    pub fn path_id(&self) -> PathId {
+        PathId { path: self.path(), is_dir: self.is_dir() }
+    }
 
     pub fn to_dir(&self) -> Result<&Dir, String> {
         match self {

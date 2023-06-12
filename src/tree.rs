@@ -53,7 +53,7 @@ impl Tree {
 
     pub fn view<'a>(&'a self, explorer_opt: &'a Option<Explorer>) -> Element<AppMsg> {
         let tree = match explorer_opt {
-            Some(explorer) => self.view_tree(explorer.files.to_dir().unwrap()),
+            Some(explorer) => self.view_tree(&explorer.files, false),
             _ => Text::new("nothing to show").into(),
         };
 
@@ -69,13 +69,22 @@ impl Tree {
     }
 
 
-    fn view_tree<'a>(&'a self, racine: &'a Dir) -> Element<AppMsg> {
+    fn view_tree<'a>(&'a self, racine: &'a Node, show_root_line: bool) -> Element<AppMsg> {
         let mut lines: Vec<Element<AppMsg>> = Vec::new();
 
-        lines.push(Tree::dir_line(racine, 0f32));
+        let indent_space = match show_root_line {
+            true => {
+                lines.push(view_line(&racine, 0f32));
+                self.indent_space
+            },
+            false => {
+                0f32
+            },
+        };
 
-        if racine.is_expanded {
-            self.view_tree_rec(racine, &mut lines, self.indent_space);
+        let dir = racine.to_dir().unwrap();
+        if dir.is_expanded {
+            self.view_tree_rec(dir, &mut lines, indent_space);
         }
 
 
@@ -86,79 +95,51 @@ impl Tree {
 
     fn view_tree_rec<'a>(&'a self, racine: &'a Dir, lines: &mut Vec<Element<'a, AppMsg>>, indent: f32) {
         for node in racine.content.iter() {
-            match node {
-                Node::Dir(dir) => {
-                    lines.push(Tree::dir_line(dir, indent));
+            lines.push(view_line(node, indent));
 
-                    if dir.is_expanded {
-                        self.view_tree_rec(dir, lines, indent + self.indent_space);
-                    }
-                }
-
-                Node::File(file) => {
-                    lines.push(Tree::file_line(file, indent));
+            if let Node::Dir(dir) = node {
+                if dir.is_expanded {
+                    self.view_tree_rec(dir, lines, indent + self.indent_space);
                 }
             }
         }
     }
 
-
-    fn file_line(file: &File, indent: f32) -> Element<AppMsg> {
-        let icon = icons::file_icon().size(23);
-
-        let name: Element<AppMsg> = if file.is_name_is_edited {
-            TextInput::new("file name", &file.name_cached)
-                .width(Length::Fill)
-                .size(15)
-                .on_input(|value| {
-                    AppMsg::Explorer(XplMsg::EditName(PathId { path: file.path.clone(), is_dir: false }, EditNameType::InputChanged(value)))
-                })
-                .on_submit(AppMsg::Explorer(XplMsg::EditName(PathId { path: file.path.clone(), is_dir: false }, EditNameType::Stop(ActionType::Ok))))
-                .into()
-        } else {
-            Text::new(&file.name).width(Length::Fill).size(15).into()
-        };
-
-
-
-        context_menu(icon.into(), name.into(), file.path.clone(), false, indent).into()
-
-    }
-
-
-    fn dir_line(dir: &Dir, indent: f32) -> Element<AppMsg> {
-
-        let msg_icon = AppMsg::Explorer(XplMsg::Expand(PathId { path: dir.path.clone(), is_dir: true }));
-        let icon = if dir.is_expanded {
-            Button::new(icons::chevron_down_icon())
-                .on_press(msg_icon)
-        } else {
-            Button::new(icons::chevron_right_icon())
-                .on_press(msg_icon)
-        };
-
-        let name: Element<AppMsg> = if dir.is_name_is_edited {
-            TextInput::new("dir name", &dir.name_cached)
-                .width(Length::Fill)
-                .size(15)
-                .on_input(|value| {
-                    AppMsg::Explorer(XplMsg::EditName(PathId { path: dir.path.clone(), is_dir: true }, EditNameType::InputChanged(value)))
-                })
-                .on_submit(AppMsg::Explorer(XplMsg::EditName(PathId { path: dir.path.clone(), is_dir: true }, EditNameType::Stop(ActionType::Ok))))
-                .into()
-        } else {
-            Text::new(&dir.name).width(Length::Fill).size(15).into()
-        };
-
-
-        context_menu(icon.into(), name.into(), dir.path.clone(), true, indent).into()
-
-    }
-
 }
 
+fn view_line<'a>(node: &'a Node, indent: f32) -> Element<'a, AppMsg> {
 
-fn context_menu<'a>(icon: Element<'a, AppMsg>, name: Element<'a, AppMsg>, path: PathBuf, is_dir: bool, indent: f32) ->  Element<'a, AppMsg> {
+    let icon: Element<AppMsg> = match node {
+        Node::Dir(dir) => {
+            let msg_icon = AppMsg::Explorer(XplMsg::Expand(PathId { path: dir.path.clone(), is_dir: true }));
+            if dir.is_expanded {
+                Button::new(icons::chevron_down_icon())
+                    .on_press(msg_icon).into()
+            } else {
+                Button::new(icons::chevron_right_icon())
+                    .on_press(msg_icon).into()
+            }
+        }
+
+        Node::File(_) => {
+            icons::file_icon().size(23).into()
+        }
+    };
+
+    let name: Element<AppMsg> = if node.is_name_is_edited() {
+        TextInput::new("dir name", &node.name_cached())
+            .width(Length::Fill)
+            .size(15)
+            .on_input(|value| {
+                AppMsg::Explorer(XplMsg::EditName(node.path_id(), EditNameType::InputChanged(value)))
+            })
+            .on_submit(AppMsg::Explorer(XplMsg::EditName(node.path_id(), EditNameType::Stop(ActionType::Ok))))
+            .into()
+    } else {
+        Text::new(node.name()).width(Length::Fill).size(15).into()
+    };
+
+    
 
     let underlay = Row::new()
         .push(Space::new(Length::Fixed(indent), 0))
@@ -166,30 +147,22 @@ fn context_menu<'a>(icon: Element<'a, AppMsg>, name: Element<'a, AppMsg>, path: 
         .push(Space::new(Length::Fixed(10f32), 0))
         .push(name);
 
-
+    
     ContextMenu::new(underlay, move ||
         column(vec![
             Button::new(Text::new("New File")).on_press(
-                AppMsg::Explorer(XplMsg::New(PathId { path: path.clone(), is_dir: false } ))).into(),
+                AppMsg::Explorer(XplMsg::New(node.path_id()))).into(),
             Button::new(Text::new("New Dir")).on_press(
-                AppMsg::Explorer(XplMsg::New(PathId { path: path.clone(), is_dir: true } ))).into(),
+                AppMsg::Explorer(XplMsg::New(node.path_id()))).into(),
             Button::new(Text::new("Cut")).on_press(
-                AppMsg::Explorer(XplMsg::Cut(PathId { path: path.clone(), is_dir: is_dir } ))).into(),
+                AppMsg::Explorer(XplMsg::Cut(node.path_id()))).into(),
             Button::new(Text::new("Copy")).on_press(
-                AppMsg::Explorer(XplMsg::Copy(PathId { path: path.clone(), is_dir: is_dir }))).into(),
+                AppMsg::Explorer(XplMsg::Copy(node.path_id()))).into(),
             Button::new(Text::new("Paste")).on_press(
-                AppMsg::Explorer(XplMsg::Paste(PathId { path: path.clone(), is_dir: is_dir }))).into(),
+                AppMsg::Explorer(XplMsg::Paste(node.path_id()))).into(),
             Button::new(Text::new("Rename")).on_press(
-                AppMsg::Explorer(XplMsg::EditName(PathId { path: path.clone(), is_dir: is_dir }, EditNameType::Start))).into(),
+                AppMsg::Explorer(XplMsg::EditName(node.path_id(), EditNameType::Start))).into(),
         ]).into()
     ).into()
+
 }
-
-
-
-
-
-
-
-
-
