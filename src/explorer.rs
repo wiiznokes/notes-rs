@@ -20,13 +20,13 @@ pub struct Explorer {
 }
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EntryType {
     Dir,
     File
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ActionType {
     Ok,
     Cancel
@@ -35,7 +35,7 @@ pub enum ActionType {
 #[derive(Debug, Clone)]
 pub enum EditName {
     Start(PathBuf, EntryType),
-    Stop(PathBuf, EntryType),
+    Stop(PathBuf, EntryType, ActionType),
     InputChanged(PathBuf, EntryType, String)
 }
 
@@ -215,6 +215,51 @@ impl Explorer {
         }
     }
 
+    pub fn edit_name(&mut self, edit_name: EditName) {
+
+        println!("{:?}", edit_name);
+
+        match edit_name {
+            EditName::Start(path, entry_type) => {
+                let node = search_node_by_path(&mut self.files, path, entry_type == EntryType::Dir).unwrap();
+
+                match node {
+                    Node::Dir(dir) => { dir.name_cached = dir.name.clone(); dir.is_name_is_edited = true; },
+                    Node::File(file) => { file.name_cached = file.name.clone(); file.is_name_is_edited = true; },
+                }
+            }
+            EditName::Stop(path, entry_type, action_type) => {
+                let node = search_node_by_path(&mut self.files, path, entry_type == EntryType::Dir).unwrap();
+
+                match node {
+                    Node::Dir(dir) => {
+                        if action_type == ActionType::Ok {
+                            dir.name = dir.name_cached.clone();
+                        }
+                        dir.is_name_is_edited = false;
+                    }
+                    Node::File(file) => {
+                        if action_type == ActionType::Ok {
+                            file.name = file.name_cached.clone();
+                        }
+                        file.is_name_is_edited = false;
+                    }
+                }
+            }
+            EditName::InputChanged(path, entry_type, value) => {
+                let node = search_node_by_path(&mut self.files, path, entry_type == EntryType::Dir).unwrap();
+
+                match node {
+                    Node::Dir(dir) => { dir.name_cached = value; },
+                    Node::File(file) => { file.name_cached = value; },
+                }
+            }
+        }
+
+    }
+
+
+
     pub fn handle_message(&mut self, message: XplMsg) {
         match message {
             XplMsg::Watcher(msg) => match msg {
@@ -234,7 +279,9 @@ impl Explorer {
             XplMsg::Cut(_, _) => {}
             XplMsg::Copy(_, _) => {}
             XplMsg::Paste(_, _) => {}
-            XplMsg::EditName(_) => {}
+            XplMsg::EditName(edit_name) => {
+                self.edit_name(edit_name);
+            }
             XplMsg::Expand(path) => {
                 self.expand_dir(path).unwrap();
             }

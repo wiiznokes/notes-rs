@@ -14,7 +14,7 @@ use iced::widget::scrollable::Properties;
 use iced_aw::ContextMenu;
 
 use crate::app::{self, AppMsg};
-use crate::explorer::{Dir, EditName, EntryType, Explorer, File, Node, search_node_by_path, XplMsg};
+use crate::explorer::{ActionType, Dir, EditName, EntryType, Explorer, File, Node, search_node_by_path, XplMsg};
 use crate::{explorer, icons};
 use crate::notify;
 
@@ -113,7 +113,7 @@ impl Tree {
                 .on_input(|value| {
                     AppMsg::Explorer(XplMsg::EditName(EditName::InputChanged(file.path.clone(), EntryType::File, value)))
                 })
-                .on_submit(AppMsg::Explorer(XplMsg::EditName(EditName::Stop(file.path.clone(), EntryType::File))))
+                .on_submit(AppMsg::Explorer(XplMsg::EditName(EditName::Stop(file.path.clone(), EntryType::File, ActionType::Ok))))
                 .into()
         } else {
             Text::new(&file.name).width(Length::Fill).size(15).into()
@@ -143,7 +143,7 @@ impl Tree {
                 .on_input(|value| {
                     AppMsg::Explorer(XplMsg::EditName(EditName::InputChanged(dir.path.clone(), EntryType::Dir, value)))
                 })
-                .on_submit(AppMsg::Explorer(XplMsg::EditName(EditName::Stop(dir.path.clone(), EntryType::Dir))))
+                .on_submit(AppMsg::Explorer(XplMsg::EditName(EditName::Stop(dir.path.clone(), EntryType::Dir, ActionType::Ok))))
                 .into()
         } else {
             Text::new(&dir.name).width(Length::Fill).size(15).into()
