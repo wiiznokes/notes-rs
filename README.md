@@ -3,8 +3,8 @@
 ## Todo
 
 - [x] view root directory in explorer
-- [ ] right click for actions
-- [ ] rename
+- [x] right click for actions
+- [x] rename
 - [ ] delete
 - [ ] create file / dir
 - [ ] handle relative / absolute path
@@ -12,8 +12,8 @@
 
 ## Goal
 
-Provide a fast, simple tool for taking note, yet powerfull. Must integrate well with new cosmic DE. Code must be as
-modulable as possible.
+Provide a fast, simple tool for taking note, yet powerful. Must integrate well with new cosmic DE. Code must be as
+modular as possible.
 
 - file explorer
 - search engine
@@ -49,7 +49,7 @@ modulable as possible.
 
 ## UI
 
-UI stucture will look something like [this](./asset/app.pdf).
+UI structure will look something like [this](./asset/app.pdf).
 And will be very inspired of [text-editor](https://github.com/pop-os/cosmic-text-editor).
 
 ## Dependencies Fedora
@@ -73,22 +73,3 @@ sudo dnf install rust-gdk-sys+default-devel
 - https://icons.getbootstrap.com/icons/folder/
 - https://icons.getbootstrap.com/icons/chevron-down/
 - https://icons.getbootstrap.com/icons/chevron-right/
-
-
-- Toggle
-
-- Search
-
-- File
-  New file
-
-Open File
-Open Folder
-
-Settings
-
-Quit
-
-- Push
-
-- Fetch
