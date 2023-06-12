@@ -82,6 +82,7 @@ impl Default for CommonNode {
 
 
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub struct Dir {
     pub is_expanded: bool,
     has_been_expanded: bool,
@@ -89,29 +90,16 @@ pub struct Dir {
     pub content: Vec<Node>,
 }
 
-impl Default for Dir {
-    fn default() -> Self {
-        Dir {
-            is_expanded: false,
-            has_been_expanded: false,
-            content: Vec::new(),
-        }
-    }
-}
+
 
 
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub struct File {
     pub extension: String,
 }
 
-impl Default for File {
-    fn default() -> Self {
-        File {
-            extension: String::new(),
-        }
-    }
-}
+
 
 #[derive(Debug, Clone)]
 pub enum Node {
@@ -438,7 +426,7 @@ fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), Strin
 }
 
 
-fn insert_node_in_vec(content: &mut Vec<Node>, path: &PathBuf, is_dir: bool) -> Result<(), String> {
+fn insert_node_in_vec(content: &mut Vec<Node>, path: &Path, is_dir: bool) -> Result<(), String> {
 
     let name = match path.clone().file_name() {
         Some(name) => name.to_string_lossy().to_string(),
@@ -452,7 +440,7 @@ fn insert_node_in_vec(content: &mut Vec<Node>, path: &PathBuf, is_dir: bool) -> 
 
     let node = if is_dir {
         Node::Dir(CommonNode{
-            path: path.clone(),
+            path: path.to_path_buf(),
             name,
             ..Default::default()
         }, Dir{
@@ -467,7 +455,7 @@ fn insert_node_in_vec(content: &mut Vec<Node>, path: &PathBuf, is_dir: bool) -> 
             .to_string();
 
         Node::File(CommonNode{
-            path: path.clone(),
+            path: path.to_path_buf(),
             name,
             ..Default::default()
         }, File {
@@ -497,7 +485,7 @@ fn insert_node_in_vec(content: &mut Vec<Node>, path: &PathBuf, is_dir: bool) -> 
 /// - alpha numeric (ASCII), with case insensitive (a = A)
 ///
 /// Condition: content must be sorted with this rules before using this function
-fn get_index_sorted(name: String, is_dir: bool, content: &Vec<Node>) -> Result<usize, usize> {
+fn get_index_sorted(name: String, is_dir: bool, content: &[Node]) -> Result<usize, usize> {
     // notice we use negation when node is a dir
     // because 0 will have a smaller index than 1
     //
@@ -518,7 +506,7 @@ fn get_index_unknown_type(name: String, content: &Vec<Node>) -> Result<usize, St
         Err(_) => {
             match get_index_sorted(name, false, content) {
                 Ok(index) => { Ok(index) }
-                Err(_) => { return Err("node index not found".to_string()); }
+                Err(_) => { Err("node index not found".to_string())}
             }
         }
     }

@@ -49,7 +49,7 @@ impl Application for Notes {
 
         let root_path = args.nth(1).map(PathBuf::from);
 
-        let root_path_clone = root_path.clone();
+        let root_path_clone = root_path;
 
         let app = Notes {
             actions: Actions::new(),
