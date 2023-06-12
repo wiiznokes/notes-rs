@@ -69,7 +69,16 @@ pub struct CommonNode {
     pub is_name_is_edited: bool,
 }
 
-
+impl Default for CommonNode {
+    fn default() -> Self {
+        CommonNode {
+            path: PathBuf::new(),
+            name: String::new(),
+            name_cached: String::new(),
+            is_name_is_edited: false,
+        }
+    }
+}
 
 
 #[derive(Debug, Clone)]
@@ -80,9 +89,28 @@ pub struct Dir {
     pub content: Vec<Node>,
 }
 
+impl Default for Dir {
+    fn default() -> Self {
+        Dir {
+            is_expanded: false,
+            has_been_expanded: false,
+            content: Vec::new(),
+        }
+    }
+}
+
+
 #[derive(Debug, Clone)]
 pub struct File {
     pub extension: String,
+}
+
+impl Default for File {
+    fn default() -> Self {
+        File {
+            extension: String::new(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -120,6 +148,21 @@ impl Node {
         }
     }
 
+
+    pub fn to_dir(&self) -> Result<(&CommonNode, &Dir), String> {
+        match self {
+            Node::Dir(com, dir) => Ok((com, dir)),
+            _ => Err("not a dir".to_string()),
+        }
+    }
+
+
+    pub fn to_dir_mut(&mut self) -> Result<(&mut CommonNode, &mut Dir), String> {
+        match self {
+            Node::Dir(com, dir) => Ok((com, dir)),
+            _ => Err("not a dir".to_string()),
+        }
+    }
 
 }
 
@@ -161,8 +204,7 @@ impl Explorer {
                 CommonNode {
                     path: path.clone(),
                     name: dir_name,
-                    name_cached: String::new(),
-                    is_name_is_edited: false,
+                    ..Default::default()
                 },
                 Dir {
                     is_expanded: true,
@@ -179,10 +221,9 @@ impl Explorer {
         match message {
             XplMsg::Watcher(msg) => match msg {
                 notify::NtfMsg::Waiting(mut watcher) => {
-                    if let Err(e) = watcher.try_send(notify::NtfMsg::Watch(self.root_path.clone()))
-                    {
-                        return Err(e.to_string());
-                    }
+                    println!("received from watcher: Waiting");
+                    watcher.try_send(notify::NtfMsg::Watch(self.root_path.clone()))
+                        .expect("can't send to watcher");
 
                     self.watcher = Some(watcher);
                 }
@@ -207,8 +248,26 @@ impl Explorer {
 
         match event.kind {
             ::notify::EventKind::Create(create_kind) => match create_kind {
-                ::notify::event::CreateKind::File => {}
-                ::notify::event::CreateKind::Folder => {}
+                ::notify::event::CreateKind::File => {
+                    let path = &event.paths[0];
+                    let (com, dir) = search_parent_node(&mut self.files, path.clone()).unwrap();
+
+                    insert_node_in_vec(
+                        &mut dir.content,
+                        path,
+                        false
+                    ).unwrap();
+                }
+                ::notify::event::CreateKind::Folder => {
+                    let path = &event.paths[0];
+                    let (com, dir) = search_parent_node(&mut self.files, path.clone()).unwrap();
+
+                    insert_node_in_vec(
+                        &mut dir.content,
+                        path,
+                        true
+                    ).unwrap();
+                }
                 _ => {}
             },
             ::notify::EventKind::Modify(modify_kind) => {
@@ -218,25 +277,23 @@ impl Explorer {
                         match rename_kind {
                             ::notify::event::RenameMode::To => {
                                 let path = &event.paths[0];
+                                let (com, dir) = search_parent_node(&mut self.files, path.clone()).unwrap();
 
+                                insert_node_in_vec(
+                                    &mut dir.content,
+                                    path,
+                                    path.is_dir()
+                                ).unwrap();
                             }
                             ::notify::event::RenameMode::From => {
 
                                 let path = &event.paths[0];
-                                let (com, dir) = match  search_node_by_path(&mut self.files, PathId {
-                                    path: path.parent().unwrap().into(),
-                                    is_dir: true
-                                }) {
-                                    Ok(Node::Dir(com, dir)) => (com, dir),
-                                    Err(e) => return Err(e),
-                                    _ => { return Err("parent node not found".to_string()); }
-                                };
+                                let (com, dir) = search_parent_node(&mut self.files, path.clone()).unwrap();
                                 // find index
                                 let name = path.file_name().unwrap().to_string_lossy().to_string();
                                 let index = get_index_unknown_type(name, &dir.content).unwrap();
 
                                 dir.content.remove(index);
-
                             }
                             _ => {}
                         }
@@ -246,12 +303,29 @@ impl Explorer {
             }
             ::notify::EventKind::Remove(remove_kind) => {
                 match remove_kind {
+
                     ::notify::event::RemoveKind::File => {
-                        // supp
+                        let path = &event.paths[0];
+                        let (com, dir) = search_parent_node(&mut self.files, path.clone()).unwrap();
+
+                        // find index
+                        let name = path.file_name().unwrap().to_string_lossy().to_string();
+                        let index = get_index_sorted(name, false, &dir.content).unwrap();
+
+                        dir.content.remove(index);
                     }
                     ::notify::event::RemoveKind::Folder => {
-                        // supp
+                        let path = &event.paths[0];
+                        let (com, dir) = search_parent_node(&mut self.files, path.clone()).unwrap();
+
+                        // find index
+                        let name = path.file_name().unwrap().to_string_lossy().to_string();
+                        let index = get_index_sorted(name, true, &dir.content).unwrap();
+
+                        dir.content.remove(index);
                     }
+                    
+
                     _ => {}
                 }
             }
@@ -336,64 +410,19 @@ fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), Strin
         match entry_opt {
             Ok(entry) => {
                 let entry_path = entry.path();
-
-                if !entry_path.is_dir() && !entry_path.is_file() {
-                    println!(
+                let is_dir = entry_path.is_dir();
+                if !is_dir && !entry_path.is_file() {
+                    return Err(format!(
                         "special file or dir have been passed: {}",
                         entry_path.display()
-                    );
-                    continue;
+                    ));
                 }
 
-                let entry_name = match entry_path.clone().file_name() {
-                    Some(name) => name.to_string_lossy().to_string(),
-                    None => {
-                        return Err(format!(
-                            "can't read the name of the path {}",
-                            entry_path.to_string_lossy()
-                        ));
-                    }
-                };
-
-                let node = if entry_path.is_dir() {
-                    Node::Dir(CommonNode{
-                        path: entry_path,
-                        name: entry_name,
-                        name_cached: String::new(),
-                        is_name_is_edited: false,
-                    }, Dir{
-                        is_expanded: false,
-                        has_been_expanded: false,
-                        content: vec![],
-                    })
-                } else {
-                    let entry_extension = entry_path
-                        .clone()
-                        .extension()
-                        .unwrap_or(OsStr::new(""))
-                        .to_string_lossy()
-                        .to_string();
-
-                    Node::File(CommonNode{
-                        path: entry_path,
-                        name: entry_name,
-                        name_cached: String::new(),
-                        is_name_is_edited: false,
-                    }, File {
-                        extension: entry_extension,
-                    })
-                };
-
-                match get_index_sorted(node.common().name.clone(), node.is_dir(), content) {
-                    Ok(index) => {
-                        return Err(format!(
-                            "can't insert {} in {}. name already exist in content",
-                            node.common().name.clone(),
-                            node.common().path.to_string_lossy()
-                        ));
-                    }
-                    Err(index) => content.insert(index, node),
-                }
+                insert_node_in_vec(
+                    content,
+                    &entry_path,
+                    is_dir
+                ).unwrap();
             }
             Err(error) => {
                 return Err(format!(
@@ -405,6 +434,57 @@ fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), Strin
         }
     }
 
+    Ok(())
+}
+
+
+fn insert_node_in_vec(content: &mut Vec<Node>, path: &PathBuf, is_dir: bool) -> Result<(), String> {
+
+    let name = match path.clone().file_name() {
+        Some(name) => name.to_string_lossy().to_string(),
+        None => {
+            return Err(format!(
+                "can't read the name of the path {}",
+                path.to_string_lossy()
+            ));
+        }
+    };
+
+    let node = if is_dir {
+        Node::Dir(CommonNode{
+            path: path.clone(),
+            name,
+            ..Default::default()
+        }, Dir{
+            ..Default::default()
+        })
+    } else {
+        let entry_extension = path
+            .clone()
+            .extension()
+            .unwrap_or(OsStr::new(""))
+            .to_string_lossy()
+            .to_string();
+
+        Node::File(CommonNode{
+            path: path.clone(),
+            name,
+            ..Default::default()
+        }, File {
+            extension: entry_extension,
+        })
+    };
+
+    match get_index_sorted(node.common().name.clone(), node.is_dir(), content) {
+        Ok(index) => {
+            return Err(format!(
+                "can't insert {} in {}. name already exist in content",
+                node.common().name.clone(),
+                node.common().path.to_string_lossy()
+            ));
+        }
+        Err(index) => content.insert(index, node),
+    }
     Ok(())
 }
 
@@ -443,6 +523,15 @@ fn get_index_unknown_type(name: String, content: &Vec<Node>) -> Result<usize, St
         }
     }
 }
+
+
+pub fn search_parent_node(root_node: &mut Node, path: PathBuf) -> Result<(&mut CommonNode, &mut Dir), String> {
+    search_node_by_path(root_node, PathId {
+        path: path.parent().unwrap().into(),
+        is_dir: true
+    }).unwrap().to_dir_mut()
+}
+
 
 pub fn search_node_by_path(root_node: &mut Node, path_id: PathId) -> Result<&mut Node, String> {
     if !root_node.is_dir() {

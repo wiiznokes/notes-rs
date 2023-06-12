@@ -35,6 +35,7 @@ pub fn start_watcher() -> Subscription<NtfMsg> {
 
             let mut watcher = async_watcher(output).unwrap();
 
+            println!("start watching");
             loop {
                 if let Some(res) = app_receiver.next().await {
                     println!("receive from app: {:?}", res);
@@ -56,8 +57,7 @@ pub fn start_watcher() -> Subscription<NtfMsg> {
 }
 
 fn async_watcher(mut output: Sender<NtfMsg>) -> notify::Result<RecommendedWatcher> {
-    // Automatically select the best implementation for your platform.
-    // You can also access each implementation directly e.g. INotifyWatcher.
+
     let watcher = RecommendedWatcher::new(
         move |res: Result<Event, notify::Error>| {
             futures::executor::block_on(async {
