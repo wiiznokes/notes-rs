@@ -182,10 +182,7 @@ impl Explorer {
 
         let mut content = Vec::new();
 
-        if let Err(e) = fill_dir_content(&mut content, &path) {
-            println!("{e}");
-            return Err(e);
-        }
+        fill_dir_content(&mut content, &path);
 
         Ok(Explorer {
             files: Node::Dir(
@@ -215,7 +212,7 @@ impl Explorer {
 
                     self.watcher = Some(watcher);
                 }
-                notify::NtfMsg::Event(event) => return self.handle_event(event),
+                notify::NtfMsg::Event(event) => self.handle_event(event),
 
                 _ => panic!("{:?}", msg),
             },
@@ -224,21 +221,27 @@ impl Explorer {
             XplMsg::Copy(_) => {}
             XplMsg::Paste(_) => {}
             XplMsg::EditName(path_id, edit_name) => return self.edit_name(path_id, edit_name),
-            XplMsg::Expand(path_id) => return self.expand_dir(path_id),
+            XplMsg::Expand(path_id) => self.expand_dir(path_id),
             XplMsg::Delete(path_id) => return self.remove(path_id),
         }
 
         Ok(())
     }
 
-    fn handle_event(&mut self, event: Event) -> Result<(), String> {
+
+    // todo: remove all unwrap in this function
+    fn handle_event(&mut self, event: Event) {
         println!("{:?}", event);
 
         match event.kind {
             ::notify::EventKind::Create(create_kind) => match create_kind {
                 ::notify::event::CreateKind::File => {
                     let path = &event.paths[0];
-                    let (com, dir) = search_parent_node(&mut self.files, path.clone()).unwrap();
+                    let (com, dir) = match search_parent_node(&mut self.files, path.clone()) {
+                        Ok((com, dir)) => { (com, dir) },
+                        Err(e) => { println!("{:?}", e); return },
+                    };
+
 
                     insert_node_in_vec(
                         &mut dir.content,
@@ -298,7 +301,11 @@ impl Explorer {
 
                         // find index
                         let name = path.file_name().unwrap().to_string_lossy().to_string();
-                        let index = get_index_sorted(name, false, &dir.content).unwrap();
+
+                        // see: https://github.com/notify-rs/notify/issues/493
+                        //let index = get_index_sorted(name, false, &dir.content).unwrap();
+
+                        let index = get_index_unknown_type(name, &dir.content).unwrap();
 
                         dir.content.remove(index);
                     }
@@ -321,35 +328,23 @@ impl Explorer {
             _ => {}
         }
 
-        Ok(())
     }
 
-    fn expand_dir(&mut self, path_id: PathId) -> Result<(), String> {
-        let (com, dir) = match search_node_by_path(&mut self.files, path_id) {
-            Ok(Node::Dir(com, dir)) => (com, dir),
-            Err(e) => return Err(e),
-            _ => {
-                panic!("not a dir when expand");
-            }
-        };
+    fn expand_dir(&mut self, path_id: PathId) {
+        let (com, dir) = search_node_by_path(&mut self.files, path_id).unwrap().to_dir_mut().unwrap();
 
         if dir.has_been_expanded {
             dir.is_expanded = !dir.is_expanded;
-            Ok(())
         } else {
-            match fill_dir_content(&mut dir.content, &com.path.clone()) {
-                Ok(_) => {
-                    dir.is_expanded = !dir.is_expanded;
-                    dir.has_been_expanded = true;
+            fill_dir_content(&mut dir.content, &com.path.clone());
 
-                    if let Some(ref mut watcher) = self.watcher {
-                        watcher
-                            .try_send(notify::NtfMsg::Watch(com.path.clone()))
-                            .expect("error trying to send to watcher");
-                    }
-                    Ok(())
-                }
-                Err(e) => Err(e),
+            dir.is_expanded = !dir.is_expanded;
+            dir.has_been_expanded = true;
+
+            if let Some(ref mut watcher) = self.watcher {
+                watcher
+                    .try_send(notify::NtfMsg::Watch(com.path.clone()))
+                    .expect("error trying to send to watcher");
             }
         }
     }
@@ -388,10 +383,13 @@ impl Explorer {
     }
 }
 
-fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), String> {
+fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) {
     let dir_entries = match fs::get_dir_entries(path) {
         Ok(entries) => entries,
-        Err(e) => return Err(e),
+        Err(e) => {
+            eprintln!("can't get dir entries: {}", e);
+            return;
+        },
     };
 
     for entry_opt in dir_entries {
@@ -400,35 +398,33 @@ fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), Strin
                 let entry_path = entry.path();
                 let is_dir = entry_path.is_dir();
                 if !is_dir && !entry_path.is_file() {
-                    return Err(format!(
-                        "special file or dir have been passed: {}",
-                        entry_path.display()
-                    ));
+                    eprintln!("special file have been passed: {}", entry_path.display());
+                    continue;
                 }
 
-                insert_node_in_vec(
+                let _ = insert_node_in_vec(
                     content,
                     &entry_path,
                     is_dir
-                ).unwrap();
+                ).map_err(|e| eprintln!("{:?}", e));
             }
             Err(error) => {
-                return Err(format!(
-                    "error when reading the content of {}: {}",
+                eprintln!("error when reading the content of {}: {}",
                     path.display(),
-                    error
-                ));
+                    error);
+                continue;
             }
         }
     }
-
-    Ok(())
 }
 
 
 fn insert_node_in_vec(content: &mut Vec<Node>, path: &Path, is_dir: bool) -> Result<(), String> {
 
-    let name = path.file_name().unwrap().to_string_lossy().to_string();
+    let name = match path.file_name() {
+        Some(name) => { name.to_string_lossy().to_string() }
+        None => { return Err("no file name".to_string()) }
+    };
 
     let node = if is_dir {
         Node::Dir(CommonNode{
@@ -505,10 +501,19 @@ fn get_index_unknown_type(name: String, content: &[Node]) -> Result<usize, Strin
 
 
 pub fn search_parent_node(root_node: &mut Node, path: PathBuf) -> Result<(&mut CommonNode, &mut Dir), String> {
-    search_node_by_path(root_node, PathId {
-        path: path.parent().unwrap().into(),
+
+    let parent_path = match path.parent() {
+        Some(parent_path) => parent_path,
+        None => { return Err("no parent".to_string()) }
+    };
+
+    match search_node_by_path(root_node, PathId {
+        path: parent_path.into(),
         is_dir: true
-    }).unwrap().to_dir_mut()
+    }){
+        Ok(node) => { node.to_dir_mut() }
+        Err(e) => { Err(e) }
+    }
 }
 
 
