@@ -428,15 +428,7 @@ fn fill_dir_content(content: &mut Vec<Node>, path: &PathBuf) -> Result<(), Strin
 
 fn insert_node_in_vec(content: &mut Vec<Node>, path: &Path, is_dir: bool) -> Result<(), String> {
 
-    let name = match path.clone().file_name() {
-        Some(name) => name.to_string_lossy().to_string(),
-        None => {
-            return Err(format!(
-                "can't read the name of the path {}",
-                path.to_string_lossy()
-            ));
-        }
-    };
+    let name = path.file_name().unwrap().to_string_lossy().to_string();
 
     let node = if is_dir {
         Node::Dir(CommonNode{
@@ -448,7 +440,6 @@ fn insert_node_in_vec(content: &mut Vec<Node>, path: &Path, is_dir: bool) -> Res
         })
     } else {
         let entry_extension = path
-            .clone()
             .extension()
             .unwrap_or(OsStr::new(""))
             .to_string_lossy()
@@ -500,7 +491,7 @@ fn get_index_sorted(name: String, is_dir: bool, content: &[Node]) -> Result<usiz
 
 
 /// if a node with the same name is found, return this index, else return [`Err`]
-fn get_index_unknown_type(name: String, content: &Vec<Node>) -> Result<usize, String> {
+fn get_index_unknown_type(name: String, content: &[Node]) -> Result<usize, String> {
     match get_index_sorted(name.clone(), true, content) {
         Ok(index) => { Ok(index) }
         Err(_) => {
