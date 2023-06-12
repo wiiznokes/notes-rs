@@ -100,7 +100,7 @@ impl Application for Notes {
             .push(self.actions.view())
             .push(
                 Row::new()
-                    .push(self.dirs_tree.view(&self.explorer))
+                    .push(self.dirs_tree.view(&self.explorer, false))
                     .push(self.tab.view(self)),
             )
             .into()
