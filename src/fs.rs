@@ -44,12 +44,9 @@ pub fn rename(from: &PathBuf, to_relative: String) -> Result<(), String> {
         None => return Err("no parent".to_string()),
     };
 
-
-    match fs::metadata(to_absolute.clone()) {
-        Ok(_) => { return Err("file or folder already exists".to_string()) }
-        Err(_) => {}
+    if to_absolute.exists() {
+        return Err("file or folder already exists".to_string())
     }
-
 
 
 
@@ -193,7 +190,7 @@ mod tests {
 
     #[test]
     #[serial]
-    fn already_exists() {
+    fn already_exist() {
         let path = "/tmp/note_test/".to_string();
         let _ = fs::remove_dir_all(path.clone());
         fs::create_dir_all(path.clone() + "dir1").unwrap();
@@ -223,5 +220,20 @@ mod tests {
         assert_eq!(ct_f2, res_ct_f2);
     }
 
+
+    #[test]
+    #[serial]
+    fn already_exist_in_path() {
+        let path = "/tmp/note_test/".to_string();
+        let _ = fs::remove_dir_all(path.clone());
+        fs::create_dir_all(path.clone() + "dir1/dir1.1/dir1.1.1").unwrap();
+        File::create(path.clone() + "/dir1/file1").unwrap();
+        File::create(path.clone() + "dir1/dir1.1/dir1.1.1/file1").unwrap();
+
+
+        assert_eq!(rename(&PathBuf::from(path.clone() + "/dir1/file1"), "dir1.1/dir1.1.1/file1/dir/file1".to_string()).is_err(), true);
+        assert_eq!(PathBuf::from(path.clone() + "/dir1/file1").is_file(), true);
+        assert_eq!(PathBuf::from(path.clone() + "dir1/dir1.1/dir1.1.1/file1/dir").exists(), false);
+    }
 }
 
