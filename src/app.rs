@@ -13,9 +13,9 @@ use iced::futures::channel::mpsc::Sender;
 use iced::widget::{Column, Row};
 use iced::widget::Space;
 
-use crate::{explorer, notify};
+use crate::{explorer, notify, fs};
 use crate::actions::{self, Actions};
-use crate::explorer::{Dir, Explorer, File, Node};
+use crate::explorer::{Dir, Explorer, File, Node, PathId};
 use crate::tab::{self, Tab};
 use crate::tree::{self, Tree};
 
@@ -37,6 +37,7 @@ pub enum AppMsg {
     Tab(tab::TabMsg),
 }
 
+
 impl Application for Notes {
     type Executor = executor::Default;
     type Message = AppMsg;
@@ -44,12 +45,6 @@ impl Application for Notes {
     type Flags = ();
 
     fn new(_flags: ()) -> (Self, Command<Self::Message>) {
-        let mut args = env::args();
-
-
-        let root_path = args.nth(1).map(PathBuf::from);
-
-        let root_path_clone = root_path;
 
         let app = Notes {
             actions: Actions::new(),
@@ -58,10 +53,16 @@ impl Application for Notes {
             explorer: None,
         };
 
-        let command = if let Some(path) = root_path_clone {
-            Command::perform(load(path), AppMsg::Loaded)
-        } else {
-            Command::none()
+        let command = match fs::get_absolute(env::args().nth(1).map(PathBuf::from)) {
+            Some(path_id) => {
+                if path_id.is_dir {
+                    Command::perform(load(path_id.path), AppMsg::Loaded)
+                } else {
+                    println!("todo: open file");
+                    Command::none()
+                }
+            },
+            None => Command::none(),
         };
 
         (app, command)
@@ -115,3 +116,7 @@ impl Application for Notes {
 async fn load(path: PathBuf) -> Result<Explorer, String> {
     Explorer::new(path)
 }
+
+
+
+

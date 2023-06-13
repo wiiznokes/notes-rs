@@ -2,6 +2,8 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
+#![feature(absolute_path)]
+
 use iced::{Application, Settings};
 
 use app::Notes;

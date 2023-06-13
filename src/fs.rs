@@ -1,4 +1,4 @@
-use std::{path::{PathBuf, Path}, fs::{self, ReadDir}};
+use std::{path::{PathBuf, Path, self}, fs::{self, ReadDir}};
 use std::ffi::OsStr;
 use std::fs::File;
 
@@ -81,6 +81,40 @@ pub fn get_dir_entries(path: &PathBuf) -> Result<ReadDir, String>{
 }
 
 
+
+pub fn get_absolute(path_opt: Option<PathBuf>) -> Option<PathId> {
+
+    let path = match path_opt {
+        Some(path) => {
+            match path::absolute(path) {
+                Ok(path_abs) => path_abs,
+                Err(e) => {
+                    println!("{:?}", e);
+                    return None;
+                },
+            }
+        },
+        None => return None,
+    };
+
+    
+    if path.is_dir() {
+        return Some(PathId {
+            path,
+            is_dir: true
+        });
+    }
+
+    if path.is_file() {
+        return Some(PathId {
+            path,
+            is_dir: false
+        });
+    }
+
+    return None;
+
+}
 
 
 
