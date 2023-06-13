@@ -2,7 +2,6 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
-use crate::{fs, map_err_return, map_none_return};
 use std::ffi::OsStr;
 use std::path::{Iter, Path, PathBuf};
 
@@ -11,6 +10,7 @@ use iced::futures::channel::mpsc::Sender;
 use iced::Command;
 
 use crate::notify;
+use crate::{fs, map_err_return, map_none_return};
 
 #[derive(Debug, Clone)]
 pub struct Explorer {
@@ -360,7 +360,7 @@ impl Explorer {
                 let com = node.common();
                 match action_type {
                     ActionType::Ok => {
-                        return fs::rename(&com.path.clone(), com.name_cached.clone())
+                        return fs::rename(&com.path.clone(), com.name_cached.clone());
                     }
 
                     ActionType::Cancel => {}

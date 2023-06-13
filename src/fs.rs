@@ -98,12 +98,14 @@ pub fn get_absolute(path_opt: Option<PathBuf>) -> Option<PathId> {
 
 #[cfg(test)]
 mod tests {
-    use crate::fs::rename;
-    use serial_test::serial;
     use std::fs;
     use std::fs::File;
     use std::io::{Read, Write};
     use std::path::PathBuf;
+
+    use serial_test::serial;
+
+    use crate::fs::rename;
 
     #[test]
     #[serial]
@@ -115,7 +117,7 @@ mod tests {
 
         assert!(rename(
             &PathBuf::from(path.clone() + "/dir1/file1"),
-            path.clone() + "/dir1/file2"
+            path.clone() + "/dir1/file2",
         )
         .is_ok());
         assert!(!PathBuf::from(path.clone() + "/dir1/file1").exists());
@@ -132,12 +134,13 @@ mod tests {
 
         assert!(rename(
             &PathBuf::from(path.clone() + "/dir1/file1"),
-            "file2".to_string()
+            "file2".to_string(),
         )
         .is_ok());
         assert!(!PathBuf::from(path.clone() + "/dir1/file1").exists());
         assert!(PathBuf::from(path + "/dir1/file2").is_file());
     }
+
     #[test]
     #[serial]
     fn relative_parent() {
@@ -149,7 +152,7 @@ mod tests {
 
         assert!(rename(
             &PathBuf::from(path.clone() + "/dir1/dir1.1/file1"),
-            "../../dir2/file2".to_string()
+            "../../dir2/file2".to_string(),
         )
         .is_ok());
         assert!(PathBuf::from(path.clone() + "/dir2/file2").exists());
@@ -182,7 +185,7 @@ mod tests {
 
         assert!(rename(
             &PathBuf::from(path.clone() + "/dir1/file1"),
-            "./".to_string()
+            "./".to_string(),
         )
         .is_err());
         assert!(PathBuf::from(path.clone() + "/dir1/file1").is_file());
@@ -190,7 +193,7 @@ mod tests {
         // bad name 2
         assert!(rename(
             &PathBuf::from(path.clone() + "/dir1/file1"),
-            "..".to_string()
+            "..".to_string(),
         )
         .is_err());
         assert!(PathBuf::from(path + "/dir1/file1").is_file());
@@ -207,7 +210,7 @@ mod tests {
 
         assert!(rename(
             &PathBuf::from(path.clone() + "/dir1/file1"),
-            "file1/file1".to_string()
+            "file1/file1".to_string(),
         )
         .is_err());
         assert!(PathBuf::from(path.clone() + "/dir1/file1").is_file());
@@ -235,7 +238,7 @@ mod tests {
 
         assert!(rename(
             &PathBuf::from(path + "/dir1/file1"),
-            "/dir2/file1".to_string()
+            "/dir2/file1".to_string(),
         )
         .is_err());
 
@@ -260,7 +263,7 @@ mod tests {
 
         assert!(rename(
             &PathBuf::from(path.clone() + "/dir1/file1"),
-            "dir1.1/dir1.1.1/file1/dir/file1".to_string()
+            "dir1.1/dir1.1.1/file1/dir/file1".to_string(),
         )
         .is_err());
         assert!(PathBuf::from(path.clone() + "/dir1/file1").is_file());

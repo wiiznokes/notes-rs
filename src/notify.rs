@@ -2,11 +2,12 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
+use std::path::PathBuf;
+
 use futures::{channel::mpsc::Sender, SinkExt, StreamExt};
 use iced::futures::channel::mpsc;
 use iced::{subscription, Subscription};
 use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
-use std::path::PathBuf;
 
 #[derive(Clone, Debug)]
 pub enum NtfMsg {

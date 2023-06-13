@@ -1,17 +1,17 @@
 name: Test
-on: [push, pull_request]
+on: [ push, pull_request ]
 jobs:
   test_linux:
     name: Ubuntu Checks
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust: [nightly]
+        rust: [ nightly ]
     steps:
-    - uses: hecrj/setup-rust-action@v1
-      with:
-        rust-version: ${{ matrix.rust }}
-    - uses: actions/checkout@master
-    - name: Run tests
-      run: |
-        cargo test --all --all-features
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: ${{ matrix.rust }}
+      - uses: actions/checkout@master
+      - name: Run tests
+        run: |
+          cargo test --all --all-features

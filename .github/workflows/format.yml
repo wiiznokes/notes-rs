@@ -1,11 +1,11 @@
 name: Format
-on: [push, pull_request]
+on: [ push, pull_request ]
 jobs:
   all:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust: [nightly]
+        rust: [ nightly ]
     steps:
       - uses: hecrj/setup-rust-action@v1
         with:
