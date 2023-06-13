@@ -5,10 +5,10 @@
 - [x] view root directory in explorer
 - [x] right click for actions
 - [x] rename
-- [ ] delete
+- [x] delete
 - [ ] create file / dir
-- [ ] handle relative / absolute path
-- [ ] impl of notify events
+- [x] handle relative / absolute path
+- [x] impl of notify events
 
 ## Goal
 
