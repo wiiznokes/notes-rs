@@ -75,7 +75,16 @@ impl Application for Notes {
         match message {
             AppMsg::Explorer(msg) => {
                 if let Some(ref mut explorer) = self.explorer {
-                    explorer.handle_message(msg).unwrap();
+                    match explorer.handle_message(msg) {
+                        Some(res) => {
+                            match res {
+                                file_struct::XplResult::RootHasBeenRemoved => {
+                                    self.explorer = None
+                                },
+                            }
+                        },
+                        None => {},
+                    }
                 }
             }
             AppMsg::Loaded(res) => match res {

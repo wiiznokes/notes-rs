@@ -6,6 +6,7 @@ use std::path::{Iter, Path, PathBuf};
 use ::notify::Event;
 use iced::futures::channel::mpsc::Sender;
 use iced::Command;
+use path_clean::PathClean;
 
 use crate::explorer::notify;
 use crate::{helpers::fs, map_err_return, map_none_return};
@@ -51,11 +52,6 @@ pub enum XplMsg {
     Expand(PathId),
 }
 
-#[derive(Debug, Clone)]
-pub enum XplImplReqMsg {
-    None,
-    RootHasBeenRemoved,
-}
 
 #[derive(Debug, Clone)]
 pub struct CommonNode {
@@ -140,6 +136,14 @@ impl Node {
     }
 }
 
+
+#[derive(Debug, Clone)]
+pub enum XplResult {
+    RootHasBeenRemoved,
+}
+
+
+
 impl Explorer {
     /// Construct a node of type Dir from a path
     ///
@@ -188,7 +192,7 @@ impl Explorer {
         })
     }
 
-    pub fn handle_message(&mut self, message: XplMsg) -> Result<(), String> {
+    pub fn handle_message(&mut self, message: XplMsg) -> Option<XplResult> {
         match message {
             XplMsg::Watcher(msg) => match msg {
                 notify::NtfMsg::Waiting(mut watcher) => {
@@ -199,7 +203,7 @@ impl Explorer {
 
                     self.watcher = Some(watcher);
                 }
-                notify::NtfMsg::Event(event) => self.handle_event(event),
+                notify::NtfMsg::Event(event) => return self.handle_event(event),
 
                 _ => panic!("{:?}", msg),
             },
@@ -220,10 +224,12 @@ impl Explorer {
             }
         }
 
-        Ok(())
+        None
     }
 
-    fn handle_event(&mut self, event: Event) {
+    fn handle_event(&mut self, event: Event) -> Option<XplResult> {
+        println!("{:?}", event);
+
         match event.kind {
             ::notify::EventKind::Create(create_kind) => match create_kind {
                 ::notify::event::CreateKind::File => {
@@ -254,6 +260,11 @@ impl Explorer {
                     }
                     ::notify::event::RenameMode::From => {
                         let path = &event.paths[0];
+                        if path == &self.root_path {
+                            println!("root path has been removed");
+                            return Some(XplResult::RootHasBeenRemoved);
+                        }
+                        
                         let (com, dir) =
                             map_err_return!(search_parent_node(&mut self.files, path.clone()));
 
@@ -277,6 +288,12 @@ impl Explorer {
                 match remove_kind {
                     ::notify::event::RemoveKind::File => {
                         let path = &event.paths[0];
+
+                        if path == &self.root_path {
+                            println!("root path has been removed");
+                            return Some(XplResult::RootHasBeenRemoved);
+                        }
+
                         let (com, dir) =
                             map_err_return!(search_parent_node(&mut self.files, path.clone()));
 
@@ -316,6 +333,7 @@ impl Explorer {
 
             _ => {}
         }
+        None
     }
 
     fn expand_dir(&mut self, path_id: PathId) {
