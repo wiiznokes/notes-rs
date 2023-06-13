@@ -93,7 +93,7 @@ pub fn get_absolute(path_opt: Option<PathBuf>) -> Option<PathId> {
         });
     }
 
-    return None;
+    None
 }
 
 #[cfg(test)]
@@ -113,16 +113,13 @@ mod tests {
         fs::create_dir_all(path.clone() + "dir1").unwrap();
         File::create(path.clone() + "/dir1/file1").unwrap();
 
-        assert_eq!(
-            rename(
-                &PathBuf::from(path.clone() + "/dir1/file1"),
-                path.clone() + "/dir1/file2"
-            )
-            .is_ok(),
-            true
-        );
-        assert_eq!(PathBuf::from(path.clone() + "/dir1/file1").exists(), false);
-        assert_eq!(PathBuf::from(path.clone() + "/dir1/file2").is_file(), true);
+        assert!(rename(
+            &PathBuf::from(path.clone() + "/dir1/file1"),
+            path.clone() + "/dir1/file2"
+        )
+        .is_ok());
+        assert!(!PathBuf::from(path.clone() + "/dir1/file1").exists());
+        assert!(PathBuf::from(path + "/dir1/file2").is_file());
     }
 
     #[test]
@@ -133,16 +130,13 @@ mod tests {
         fs::create_dir_all(path.clone() + "dir1").unwrap();
         File::create(path.clone() + "/dir1/file1").unwrap();
 
-        assert_eq!(
-            rename(
-                &PathBuf::from(path.clone() + "/dir1/file1"),
-                "file2".to_string()
-            )
-            .is_ok(),
-            true
-        );
-        assert_eq!(PathBuf::from(path.clone() + "/dir1/file1").exists(), false);
-        assert_eq!(PathBuf::from(path.clone() + "/dir1/file2").is_file(), true);
+        assert!(rename(
+            &PathBuf::from(path.clone() + "/dir1/file1"),
+            "file2".to_string()
+        )
+        .is_ok());
+        assert!(!PathBuf::from(path.clone() + "/dir1/file1").exists());
+        assert!(PathBuf::from(path + "/dir1/file2").is_file());
     }
     #[test]
     #[serial]
@@ -153,19 +147,13 @@ mod tests {
         fs::create_dir_all(path.clone() + "dir1/dir1.1/").unwrap();
         File::create(path.clone() + "/dir1/dir1.1/file1").unwrap();
 
-        assert_eq!(
-            rename(
-                &PathBuf::from(path.clone() + "/dir1/dir1.1/file1"),
-                "../../dir2/file2".to_string()
-            )
-            .is_ok(),
-            true
-        );
-        assert_eq!(PathBuf::from(path.clone() + "/dir2/file2").exists(), true);
-        assert_eq!(
-            PathBuf::from(path.clone() + "/dir1/dir1.1/file1").is_file(),
-            false
-        );
+        assert!(rename(
+            &PathBuf::from(path.clone() + "/dir1/dir1.1/file1"),
+            "../../dir2/file2".to_string()
+        )
+        .is_ok());
+        assert!(PathBuf::from(path.clone() + "/dir2/file2").exists());
+        assert!(!PathBuf::from(path + "/dir1/dir1.1/file1").is_file());
     }
 
     #[test]
@@ -177,20 +165,11 @@ mod tests {
         fs::create_dir_all(path.clone() + "dir1/dir1.1/dir1.1.1").unwrap();
         File::create(path.clone() + "/dir1/dir1.1/file1").unwrap();
 
-        assert_eq!(
-            rename(&PathBuf::from(path.clone() + "/dir1/"), "dir2".to_string()).is_ok(),
-            true
-        );
-        assert_eq!(PathBuf::from(path.clone() + "/dir1/").exists(), false);
-        assert_eq!(PathBuf::from(path.clone() + "/dir2").is_dir(), true);
-        assert_eq!(
-            PathBuf::from(path.clone() + "/dir2/dir1.1/dir1.1.1").is_dir(),
-            true
-        );
-        assert_eq!(
-            PathBuf::from(path.clone() + "/dir2/dir1.1/file1").is_file(),
-            true
-        );
+        assert!(rename(&PathBuf::from(path.clone() + "/dir1/"), "dir2".to_string()).is_ok());
+        assert!(!PathBuf::from(path.clone() + "/dir1/").exists());
+        assert!(PathBuf::from(path.clone() + "/dir2").is_dir());
+        assert!(PathBuf::from(path.clone() + "/dir2/dir1.1/dir1.1.1").is_dir());
+        assert!(PathBuf::from(path + "/dir2/dir1.1/file1").is_file());
     }
 
     #[test]
@@ -201,26 +180,20 @@ mod tests {
         fs::create_dir_all(path.clone() + "dir1").unwrap();
         File::create(path.clone() + "/dir1/file1").unwrap();
 
-        assert_eq!(
-            rename(
-                &PathBuf::from(path.clone() + "/dir1/file1"),
-                "./".to_string()
-            )
-            .is_err(),
-            true
-        );
-        assert_eq!(PathBuf::from(path.clone() + "/dir1/file1").is_file(), true);
+        assert!(rename(
+            &PathBuf::from(path.clone() + "/dir1/file1"),
+            "./".to_string()
+        )
+        .is_err());
+        assert!(PathBuf::from(path.clone() + "/dir1/file1").is_file());
 
         // bad name 2
-        assert_eq!(
-            rename(
-                &PathBuf::from(path.clone() + "/dir1/file1"),
-                "..".to_string()
-            )
-            .is_err(),
-            true
-        );
-        assert_eq!(PathBuf::from(path.clone() + "/dir1/file1").is_file(), true);
+        assert!(rename(
+            &PathBuf::from(path.clone() + "/dir1/file1"),
+            "..".to_string()
+        )
+        .is_err());
+        assert!(PathBuf::from(path + "/dir1/file1").is_file());
     }
 
     // rename a file with a folder with the same name ie: /a/b/c -> /a/b/c/d
@@ -232,19 +205,13 @@ mod tests {
         fs::create_dir_all(path.clone() + "dir1").unwrap();
         File::create(path.clone() + "/dir1/file1").unwrap();
 
-        assert_eq!(
-            rename(
-                &PathBuf::from(path.clone() + "/dir1/file1"),
-                "file1/file1".to_string()
-            )
-            .is_err(),
-            true
-        );
-        assert_eq!(PathBuf::from(path.clone() + "/dir1/file1").is_file(), true);
-        assert_eq!(
-            PathBuf::from(path.clone() + "/dir1/file1/file1").exists(),
-            false
-        );
+        assert!(rename(
+            &PathBuf::from(path.clone() + "/dir1/file1"),
+            "file1/file1".to_string()
+        )
+        .is_err());
+        assert!(PathBuf::from(path.clone() + "/dir1/file1").is_file());
+        assert!(!PathBuf::from(path + "/dir1/file1/file1").exists());
     }
 
     #[test]
@@ -266,14 +233,11 @@ mod tests {
         f1.read_to_string(&mut ct_f1).unwrap();
         f2.read_to_string(&mut ct_f2).unwrap();
 
-        assert_eq!(
-            rename(
-                &PathBuf::from(path.clone() + "/dir1/file1"),
-                "/dir2/file1".to_string()
-            )
-            .is_err(),
-            true
-        );
+        assert!(rename(
+            &PathBuf::from(path + "/dir1/file1"),
+            "/dir2/file1".to_string()
+        )
+        .is_err());
 
         let mut res_ct_f1 = String::new();
         let mut res_ct_f2 = String::new();
@@ -294,18 +258,12 @@ mod tests {
         File::create(path.clone() + "/dir1/file1").unwrap();
         File::create(path.clone() + "dir1/dir1.1/dir1.1.1/file1").unwrap();
 
-        assert_eq!(
-            rename(
-                &PathBuf::from(path.clone() + "/dir1/file1"),
-                "dir1.1/dir1.1.1/file1/dir/file1".to_string()
-            )
-            .is_err(),
-            true
-        );
-        assert_eq!(PathBuf::from(path.clone() + "/dir1/file1").is_file(), true);
-        assert_eq!(
-            PathBuf::from(path.clone() + "dir1/dir1.1/dir1.1.1/file1/dir").exists(),
-            false
-        );
+        assert!(rename(
+            &PathBuf::from(path.clone() + "/dir1/file1"),
+            "dir1.1/dir1.1.1/file1/dir/file1".to_string()
+        )
+        .is_err());
+        assert!(PathBuf::from(path.clone() + "/dir1/file1").is_file());
+        assert!(!PathBuf::from(path + "dir1/dir1.1/dir1.1.1/file1/dir").exists());
     }
 }
