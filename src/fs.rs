@@ -24,9 +24,6 @@ pub fn remove(path_id: PathId) -> Result<(), String> {
 /// from: absolute path
 /// to: relative path
 pub fn rename(from: &PathBuf, to_relative: String) -> Result<(), String> {
-    // todo: handle this case: from = /a/b , to = /a/b/c
-    // we need a temp directory to mov the file b inside it, then we can create the b directory
-
 
     let parent_from = match from.parent() {
         Some(path) => path,
@@ -50,15 +47,13 @@ pub fn rename(from: &PathBuf, to_relative: String) -> Result<(), String> {
 
 
 
-    // ignore, because rename will fail if dir not exists
-    let _ = fs::create_dir_all(parent_to);
-
-
-    println!("from {}, to {}", from.display(), to_absolute.display());
+    if let Err(e) = fs::create_dir_all(parent_to) {
+        return Err(e.to_string());
+    }
 
     fs::rename(from, to_absolute).map_err(|e| e.to_string())
-
 }
+
 
 
 // return true if the node is a dir
@@ -177,15 +172,15 @@ mod tests {
     // rename a file with a folder with the same name ie: /a/b/c -> /a/b/c/d
     #[test]
     #[serial]
-    fn need_temp() {
+    fn same_name() {
         let path = "/tmp/note_test/".to_string();
         let _ = fs::remove_dir_all(path.clone());
         fs::create_dir_all(path.clone() + "dir1").unwrap();
         File::create(path.clone() + "/dir1/file1").unwrap();
 
-        assert_eq!(rename(&PathBuf::from(path.clone() + "/dir1/file1"), "file1/file1".to_string()).is_ok(), true);
-        assert_eq!(PathBuf::from(path.clone() + "/dir1/file1").is_dir(), true);
-        assert_eq!(PathBuf::from(path.clone() + "/dir1/file1/file1").is_file(), true);
+        assert_eq!(rename(&PathBuf::from(path.clone() + "/dir1/file1"), "file1/file1".to_string()).is_err(), true);
+        assert_eq!(PathBuf::from(path.clone() + "/dir1/file1").is_file(), true);
+        assert_eq!(PathBuf::from(path.clone() + "/dir1/file1/file1").exists(), false);
     }
 
     #[test]
