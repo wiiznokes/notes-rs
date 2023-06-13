@@ -9,7 +9,7 @@ use iced::{Alignment, Command};
 use iced::{Element, Length};
 
 use crate::app::{self};
-use crate::icons;
+use crate::helpers::icons;
 
 #[derive(Clone, Debug)]
 pub struct Tab {}

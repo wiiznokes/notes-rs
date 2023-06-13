@@ -1,5 +1,3 @@
-#![allow(unused_imports)]
-#![allow(unused_variables)]
 #![allow(dead_code)]
 
 use std::path::PathBuf;
@@ -14,8 +12,7 @@ pub enum NtfMsg {
     Waiting(Sender<NtfMsg>),
 
     Watch(PathBuf),
-    StopWatch(PathBuf),
-    Stop,
+    UnWatch(PathBuf),
 
     Event(Event),
 }
@@ -47,8 +44,7 @@ pub fn start_watcher() -> Subscription<NtfMsg> {
                                 .watch(path.as_path(), RecursiveMode::NonRecursive)
                                 .unwrap();
                         }
-                        NtfMsg::StopWatch(path) => todo!(),
-                        NtfMsg::Stop => todo!(),
+                        NtfMsg::UnWatch(path) => watcher.unwatch(path.as_path()).unwrap(),
                         _ => panic!(),
                     }
                 }

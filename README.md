@@ -73,3 +73,9 @@ sudo dnf install rust-gdk-sys+default-devel
 - https://icons.getbootstrap.com/icons/folder/
 - https://icons.getbootstrap.com/icons/chevron-down/
 - https://icons.getbootstrap.com/icons/chevron-right/
+
+
+### autofix
+```
+cargo clippy --all --fix --allow-dirty --allow-staged && cargo fmt --all
+```

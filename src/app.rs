@@ -13,11 +13,12 @@ use iced::Element;
 use iced::{executor, Subscription};
 use iced::{Application, Command};
 
-use crate::actions::{self, Actions};
-use crate::explorer::{Dir, Explorer, File, Node, PathId};
-use crate::tab::{self, Tab};
-use crate::tree::{self, Tree};
-use crate::{explorer, fs, notify};
+use crate::explorer::file_struct::{Dir, Explorer, File, Node, PathId};
+use crate::explorer::{file_struct, notify};
+use crate::helpers::fs;
+use crate::tabs::tab::{self, Tab};
+use crate::top_bar::actions::{self, Actions};
+use crate::widgets::tree::{self, Tree};
 
 pub struct Notes {
     pub actions: Actions,
@@ -31,7 +32,7 @@ pub struct Notes {
 pub enum AppMsg {
     Loaded(Result<Explorer, String>),
 
-    Explorer(explorer::XplMsg),
+    Explorer(file_struct::XplMsg),
     Actions(actions::ActMsg),
     DirsTree(tree::TreeMsg),
     Tab(tab::TabMsg),
@@ -107,7 +108,7 @@ impl Application for Notes {
 
     fn subscription(&self) -> Subscription<AppMsg> {
         // todo: when we start the app without a path, we will never handle the Waiting call
-        notify::start_watcher().map(|msg| AppMsg::Explorer(explorer::XplMsg::Watcher(msg)))
+        notify::start_watcher().map(|msg| AppMsg::Explorer(file_struct::XplMsg::Watcher(msg)))
     }
 }
 

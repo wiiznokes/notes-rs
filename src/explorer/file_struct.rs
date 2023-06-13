@@ -1,5 +1,3 @@
-#![allow(unused_imports)]
-#![allow(unused_variables)]
 #![allow(dead_code)]
 
 use std::ffi::OsStr;
@@ -9,8 +7,8 @@ use ::notify::Event;
 use iced::futures::channel::mpsc::Sender;
 use iced::Command;
 
-use crate::notify;
-use crate::{fs, map_err_return, map_none_return};
+use crate::explorer::notify;
+use crate::{helpers::fs, map_err_return, map_none_return};
 
 #[derive(Debug, Clone)]
 pub struct Explorer {

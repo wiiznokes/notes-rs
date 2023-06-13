@@ -7,7 +7,7 @@ use std::{
 
 use path_clean::PathClean;
 
-use crate::explorer::PathId;
+use crate::explorer::file_struct::PathId;
 
 pub fn remove(path_id: PathId) -> Result<(), String> {
     if path_id.is_dir {
@@ -105,7 +105,7 @@ mod tests {
 
     use serial_test::serial;
 
-    use crate::fs::rename;
+    use crate::helpers::fs::rename;
 
     #[test]
     #[serial]
