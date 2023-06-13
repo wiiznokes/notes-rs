@@ -2,16 +2,16 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
-use iced::{Element, Length};
-use iced::{alignment, Application, Color, theme};
-use iced::Command;
-use iced::widget::{Button, Row, Text};
+use iced::widget::column as col;
+use iced::widget::Space;
 use iced::widget::{
     button, checkbox, container, horizontal_space, pick_list, row, slider, svg, text, text_input,
     toggler, vertical_slider,
 };
-use iced::widget::column as col;
-use iced::widget::Space;
+use iced::widget::{Button, Row, Text};
+use iced::Command;
+use iced::{alignment, theme, Application, Color};
+use iced::{Element, Length};
 use iced_aw::menu::{CloseCondition, ItemHeight, ItemWidth, MenuBar, MenuTree, PathHighlight};
 use iced_aw::quad;
 use iced_aw::style::menu_bar;
@@ -20,7 +20,6 @@ use crate::app;
 use crate::button::labeled_button;
 
 //use iced_aw::{helpers::menu_tree, menu_bar, menu_tree};
-
 
 #[derive(Clone, Debug)]
 pub struct Actions {
@@ -50,38 +49,32 @@ impl Actions {
     }
 
     pub fn update(&mut self, message: ActMsg) -> Command<app::AppMsg> {
-        { println!("{:?}", message); }
+        {
+            println!("{:?}", message);
+        }
 
         Command::none()
     }
 
     pub fn view(&self) -> Element<app::AppMsg> {
-        let right_menu_trees = vec![
-            toggle_menu(),
-            search_menu(),
-            files_menu(),
-        ];
+        let right_menu_trees = vec![toggle_menu(), search_menu(), files_menu()];
 
-        let left_menu_trees = vec![
-            fetch_menu(),
-            push_menu(),
-        ];
-
+        let left_menu_trees = vec![fetch_menu(), push_menu()];
 
         row!(
             new_menu_bar(right_menu_trees),
             horizontal_space(Length::Fill),
             new_menu_bar(left_menu_trees),
         )
-            .padding([2, 8])
-            .align_items(alignment::Alignment::Center)
-            .into()
-
+        .padding([2, 8])
+        .align_items(alignment::Alignment::Center)
+        .into()
     }
 }
 
-
-fn new_menu_bar(menu_trees: Vec<MenuTree<app::AppMsg, iced::Renderer>>) -> MenuBar<app::AppMsg, iced::Renderer> {
+fn new_menu_bar(
+    menu_trees: Vec<MenuTree<app::AppMsg, iced::Renderer>>,
+) -> MenuBar<app::AppMsg, iced::Renderer> {
     MenuBar::new(menu_trees)
         .item_width(ItemWidth::Uniform(180))
         .item_height(ItemHeight::Uniform(25))
@@ -105,31 +98,38 @@ fn search_menu<'a>() -> MenuTree<'a, app::AppMsg, iced::Renderer> {
     MenuTree::new(main_button)
 }
 
-
 fn files_menu<'a>() -> MenuTree<'a, app::AppMsg, iced::Renderer> {
     let main_button = labeled_button("Files", app::AppMsg::Actions(ActMsg::None));
 
     let children = vec![
-        MenuTree::new(labeled_button("New File", app::AppMsg::Actions(ActMsg::NewFile))),
-        MenuTree::new(labeled_button("Open File", app::AppMsg::Actions(ActMsg::OpenFile))),
-        MenuTree::new(labeled_button("Open Folder", app::AppMsg::Actions(ActMsg::OpenFolder))),
-        MenuTree::new(labeled_button("Settings", app::AppMsg::Actions(ActMsg::Settings))),
+        MenuTree::new(labeled_button(
+            "New File",
+            app::AppMsg::Actions(ActMsg::NewFile),
+        )),
+        MenuTree::new(labeled_button(
+            "Open File",
+            app::AppMsg::Actions(ActMsg::OpenFile),
+        )),
+        MenuTree::new(labeled_button(
+            "Open Folder",
+            app::AppMsg::Actions(ActMsg::OpenFolder),
+        )),
+        MenuTree::new(labeled_button(
+            "Settings",
+            app::AppMsg::Actions(ActMsg::Settings),
+        )),
         MenuTree::new(labeled_button("Quit", app::AppMsg::Actions(ActMsg::Quit))),
     ];
 
     MenuTree::with_children(main_button, children)
 }
 
-
 fn fetch_menu<'a>() -> MenuTree<'a, app::AppMsg, iced::Renderer> {
     let main_button = labeled_button("Fetch", app::AppMsg::Actions(ActMsg::Fetch));
     MenuTree::new(main_button)
 }
 
-
 fn push_menu<'a>() -> MenuTree<'a, app::AppMsg, iced::Renderer> {
     let main_button = labeled_button("Push", app::AppMsg::Actions(ActMsg::Push));
     MenuTree::new(main_button)
 }
-
-

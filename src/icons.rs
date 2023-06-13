@@ -3,8 +3,8 @@
 #![allow(dead_code)]
 
 use iced::alignment;
+use iced::widget::{text, Text};
 use iced::Font::{self};
-use iced::widget::{Text, text};
 
 // Fonts
 const ICONS: Font = Font::External {
@@ -19,7 +19,6 @@ fn icon(unicode: char) -> Text<'static> {
         .horizontal_alignment(alignment::Horizontal::Center)
         .size(15)
 }
-
 
 pub fn file_icon() -> Text<'static> {
     icon('\u{e802}')

@@ -3,21 +3,21 @@
 #![allow(dead_code)]
 
 use std::env;
-use std::path::{Path, PathBuf};
 use std::path;
+use std::path::{Path, PathBuf};
 
+use iced::futures::channel::mpsc::Sender;
+use iced::widget::Space;
+use iced::widget::{Column, Row};
+use iced::Element;
 use iced::{executor, Subscription};
 use iced::{Application, Command};
-use iced::Element;
-use iced::futures::channel::mpsc::Sender;
-use iced::widget::{Column, Row};
-use iced::widget::Space;
 
-use crate::{explorer, notify, fs};
 use crate::actions::{self, Actions};
 use crate::explorer::{Dir, Explorer, File, Node, PathId};
 use crate::tab::{self, Tab};
 use crate::tree::{self, Tree};
+use crate::{explorer, fs, notify};
 
 pub struct Notes {
     pub actions: Actions,
@@ -37,7 +37,6 @@ pub enum AppMsg {
     Tab(tab::TabMsg),
 }
 
-
 impl Application for Notes {
     type Executor = executor::Default;
     type Message = AppMsg;
@@ -45,7 +44,6 @@ impl Application for Notes {
     type Flags = ();
 
     fn new(_flags: ()) -> (Self, Command<Self::Message>) {
-
         let app = Notes {
             actions: Actions::new(),
             dirs_tree: Tree::new(),
@@ -61,7 +59,7 @@ impl Application for Notes {
                     println!("todo: open file");
                     Command::none()
                 }
-            },
+            }
             None => Command::none(),
         };
 
@@ -116,7 +114,3 @@ impl Application for Notes {
 async fn load(path: PathBuf) -> Result<Explorer, String> {
     Explorer::new(path)
 }
-
-
-
-

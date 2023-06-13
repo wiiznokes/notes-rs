@@ -2,7 +2,11 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
-use iced::{alignment, Color, Element, Length, widget::{button, text}};
+use iced::{
+    alignment,
+    widget::{button, text},
+    Color, Element, Length,
+};
 
 pub fn base_button<'a, T>(
     content: impl Into<Element<'a, T, iced::Renderer>>,
@@ -14,7 +18,6 @@ pub fn base_button<'a, T>(
         .on_press(msg)
 }
 
-
 pub fn labeled_button<'a, T>(label: &str, msg: T) -> button::Button<'a, T, iced::Renderer> {
     base_button(
         text(label)
@@ -24,7 +27,6 @@ pub fn labeled_button<'a, T>(label: &str, msg: T) -> button::Button<'a, T, iced:
         msg,
     )
 }
-
 
 struct ButtonStyle;
 

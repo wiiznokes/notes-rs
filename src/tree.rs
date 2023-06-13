@@ -6,27 +6,31 @@ use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use iced::{Element, Length};
-use iced::Command;
 use iced::futures::channel::mpsc::Sender;
-use iced::widget::{Button, column, Column, Container, row, Row, Scrollable, Space, Text, TextInput};
 use iced::widget::scrollable::Properties;
+use iced::widget::{
+    column, row, Button, Column, Container, Row, Scrollable, Space, Text, TextInput,
+};
+use iced::Command;
+use iced::{Element, Length};
 use iced_aw::ContextMenu;
 
 use crate::app::{self, AppMsg};
-use crate::explorer::{ActionType, Dir, Explorer, File, Node, search_node_by_path, XplMsg, PathId, EditNameType, XplImplReqMsg};
-use crate::{explorer, icons};
+use crate::explorer::{
+    search_node_by_path, ActionType, Dir, EditNameType, Explorer, File, Node, PathId,
+    XplImplReqMsg, XplMsg,
+};
 use crate::notify;
+use crate::{explorer, icons};
 
 pub struct Tree {
     indent_space: f32,
-
 }
 
 #[derive(Clone, Debug)]
 pub enum TreeMsg {
     Open,
-    Xpl(XplImplReqMsg)
+    Xpl(XplImplReqMsg),
 }
 
 impl Tree {
@@ -41,23 +45,21 @@ impl Tree {
         message: TreeMsg,
         explorer_opt: &mut Option<Explorer>,
     ) -> Command<AppMsg> {
-
-
         match message {
-            TreeMsg::Open => {  }
+            TreeMsg::Open => {}
             TreeMsg::Xpl(msg) => match msg {
-                XplImplReqMsg::None => {},
-                XplImplReqMsg::RootHasBeenRemoved =>{
-                    *explorer_opt = None
-                },
+                XplImplReqMsg::None => {}
+                XplImplReqMsg::RootHasBeenRemoved => *explorer_opt = None,
             },
-           
         }
         Command::none()
     }
 
-
-    pub fn view<'a>(&'a self, explorer_opt: &'a Option<Explorer>, show_root_line: bool) -> Element<AppMsg> {
+    pub fn view<'a>(
+        &'a self,
+        explorer_opt: &'a Option<Explorer>,
+        show_root_line: bool,
+    ) -> Element<AppMsg> {
         let tree = match explorer_opt {
             Some(explorer) => match &explorer.files {
                 Node::Dir(com, dir) => {
@@ -67,23 +69,19 @@ impl Tree {
                         true => {
                             lines.push(view_line(&explorer.files, 0f32));
                             self.indent_space
-                        },
-                        false => {
-                            0f32
-                        },
+                        }
+                        false => 0f32,
                     };
 
                     if dir.is_expanded {
                         self.view_tree_rec(dir, &mut lines, indent_space);
                     }
 
-
-                    Scrollable::new(column(lines))
-                        .into()
-                },
-                Node::File(..) => no_tree()
-            }
-            _ => no_tree()
+                    Scrollable::new(column(lines)).into()
+                }
+                Node::File(..) => no_tree(),
+            },
+            _ => no_tree(),
         };
 
         let content = Container::new(tree)
@@ -97,9 +95,12 @@ impl Tree {
             .into()
     }
 
-
-
-    fn view_tree_rec<'a>(&'a self, racine: &'a Dir, lines: &mut Vec<Element<'a, AppMsg>>, indent: f32) {
+    fn view_tree_rec<'a>(
+        &'a self,
+        racine: &'a Dir,
+        lines: &mut Vec<Element<'a, AppMsg>>,
+        indent: f32,
+    ) {
         for node in racine.content.iter() {
             lines.push(view_line(node, indent));
 
@@ -110,31 +111,31 @@ impl Tree {
             }
         }
     }
-
 }
-
 
 fn no_tree<'a>() -> Element<'a, AppMsg> {
     Text::new("nothing to show").into()
 }
 
 fn view_line(node: &Node, indent: f32) -> Element<AppMsg> {
-
     let icon: Element<AppMsg> = match node {
         Node::Dir(com, dir) => {
-            let msg_icon = AppMsg::Explorer(XplMsg::Expand(PathId { path: com.path.clone(), is_dir: true }));
+            let msg_icon = AppMsg::Explorer(XplMsg::Expand(PathId {
+                path: com.path.clone(),
+                is_dir: true,
+            }));
             if dir.is_expanded {
                 Button::new(icons::chevron_down_icon())
-                    .on_press(msg_icon).into()
+                    .on_press(msg_icon)
+                    .into()
             } else {
                 Button::new(icons::chevron_right_icon())
-                    .on_press(msg_icon).into()
+                    .on_press(msg_icon)
+                    .into()
             }
         }
 
-        Node::File(..) => {
-            icons::file_icon().size(23).into()
-        }
+        Node::File(..) => icons::file_icon().size(23).into(),
     };
 
     let name: Element<AppMsg> = if node.common().is_name_is_edited {
@@ -142,15 +143,22 @@ fn view_line(node: &Node, indent: f32) -> Element<AppMsg> {
             .width(Length::Fill)
             .size(15)
             .on_input(|value| {
-                AppMsg::Explorer(XplMsg::EditName(node.path_id(), EditNameType::InputChanged(value)))
+                AppMsg::Explorer(XplMsg::EditName(
+                    node.path_id(),
+                    EditNameType::InputChanged(value),
+                ))
             })
-            .on_submit(AppMsg::Explorer(XplMsg::EditName(node.path_id(), EditNameType::Stop(ActionType::Ok))))
+            .on_submit(AppMsg::Explorer(XplMsg::EditName(
+                node.path_id(),
+                EditNameType::Stop(ActionType::Ok),
+            )))
             .into()
     } else {
-        Text::new(&node.common().name).width(Length::Fill).size(15).into()
+        Text::new(&node.common().name)
+            .width(Length::Fill)
+            .size(15)
+            .into()
     };
-
-    
 
     let underlay = Row::new()
         .push(Space::new(Length::Fixed(indent), 0))
@@ -158,24 +166,34 @@ fn view_line(node: &Node, indent: f32) -> Element<AppMsg> {
         .push(Space::new(Length::Fixed(10f32), 0))
         .push(name);
 
-    
-    ContextMenu::new(underlay, move ||
+    ContextMenu::new(underlay, move || {
         column(vec![
-            Button::new(Text::new("New File")).on_press(
-                AppMsg::Explorer(XplMsg::New(node.path_id()))).into(),
-            Button::new(Text::new("New Dir")).on_press(
-                AppMsg::Explorer(XplMsg::New(node.path_id()))).into(),
-            Button::new(Text::new("Cut")).on_press(
-                AppMsg::Explorer(XplMsg::Cut(node.path_id()))).into(),
-            Button::new(Text::new("Copy")).on_press(
-                AppMsg::Explorer(XplMsg::Copy(node.path_id()))).into(),
-            Button::new(Text::new("Paste")).on_press(
-                AppMsg::Explorer(XplMsg::Paste(node.path_id()))).into(),
-            Button::new(Text::new("Rename")).on_press(
-                AppMsg::Explorer(XplMsg::EditName(node.path_id(), EditNameType::Start))).into(),
-                Button::new(Text::new("Delete")).on_press(
-                    AppMsg::Explorer(XplMsg::Delete(node.path_id()))).into(),
-        ]).into()
-    ).into()
-
+            Button::new(Text::new("New File"))
+                .on_press(AppMsg::Explorer(XplMsg::New(node.path_id())))
+                .into(),
+            Button::new(Text::new("New Dir"))
+                .on_press(AppMsg::Explorer(XplMsg::New(node.path_id())))
+                .into(),
+            Button::new(Text::new("Cut"))
+                .on_press(AppMsg::Explorer(XplMsg::Cut(node.path_id())))
+                .into(),
+            Button::new(Text::new("Copy"))
+                .on_press(AppMsg::Explorer(XplMsg::Copy(node.path_id())))
+                .into(),
+            Button::new(Text::new("Paste"))
+                .on_press(AppMsg::Explorer(XplMsg::Paste(node.path_id())))
+                .into(),
+            Button::new(Text::new("Rename"))
+                .on_press(AppMsg::Explorer(XplMsg::EditName(
+                    node.path_id(),
+                    EditNameType::Start,
+                )))
+                .into(),
+            Button::new(Text::new("Delete"))
+                .on_press(AppMsg::Explorer(XplMsg::Delete(node.path_id())))
+                .into(),
+        ])
+        .into()
+    })
+    .into()
 }

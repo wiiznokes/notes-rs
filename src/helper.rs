@@ -1,5 +1,3 @@
-
-
 #[macro_export]
 macro_rules! map_err_return {
     ($result:expr) => {

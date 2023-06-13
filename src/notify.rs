@@ -2,11 +2,11 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
-use std::path::PathBuf;
 use futures::{channel::mpsc::Sender, SinkExt, StreamExt};
-use iced::{subscription, Subscription};
 use iced::futures::channel::mpsc;
+use iced::{subscription, Subscription};
 use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
+use std::path::PathBuf;
 
 #[derive(Clone, Debug)]
 pub enum NtfMsg {
@@ -57,7 +57,6 @@ pub fn start_watcher() -> Subscription<NtfMsg> {
 }
 
 fn async_watcher(mut output: Sender<NtfMsg>) -> notify::Result<RecommendedWatcher> {
-
     let watcher = RecommendedWatcher::new(
         move |res: Result<Event, notify::Error>| {
             futures::executor::block_on(async {
