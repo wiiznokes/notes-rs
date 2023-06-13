@@ -17,8 +17,9 @@ serial_test = "2.0.0"
 
 [dependencies.iced_aw]
 #version = "0.5.2"
-git = "https://github.com/wiiznokes/iced_aw.git"
-branch = "dev-context-menu"
+git = "https://github.com/iced-rs/iced_aw.git"
+#branch = "main"
+rev = "b9b576d5b95063e4beeeee9fa98aee184b9c3019"
 features = [
     "menu",
     "quad",
