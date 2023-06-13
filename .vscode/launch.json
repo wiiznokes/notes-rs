@@ -7,7 +7,7 @@
       "name": "Debug",
       "program": "${workspaceFolder}/target/debug/notes_rs",
       "args": [
-        "aaa_test"
+        "tmp"
       ],
       "cwd": "${workspaceFolder}",
       "sourceLanguages": [
