@@ -220,9 +220,17 @@ impl Explorer {
             XplMsg::Cut(_) => {}
             XplMsg::Copy(_) => {}
             XplMsg::Paste(_) => {}
-            XplMsg::EditName(path_id, edit_name) => return self.edit_name(path_id, edit_name),
+            XplMsg::EditName(path_id, edit_name) => {
+                if let Err(e) = self.edit_name(path_id, edit_name) {
+                    eprintln!("{}", e);
+                }
+            },
             XplMsg::Expand(path_id) => self.expand_dir(path_id),
-            XplMsg::Delete(path_id) => return self.remove(path_id),
+            XplMsg::Delete(path_id) => {
+                if let Err(e) = self.remove(path_id) {
+                    eprintln!("{}", e);
+                }
+            },
         }
 
         Ok(())

@@ -48,6 +48,7 @@ pub fn rename(from: &PathBuf, to_relative: String) -> Result<(), String> {
 
 
     if let Err(e) = fs::create_dir_all(parent_to) {
+        println!("create dir all error");
         return Err(e.to_string());
     }
 
@@ -129,7 +130,6 @@ mod tests {
 
         fs::create_dir_all(path.clone() + "dir1/dir1.1/").unwrap();
         File::create(path.clone() + "/dir1/dir1.1/file1").unwrap();
-        fs::create_dir_all(path.clone() + "dir2").unwrap();
 
         assert_eq!(rename(&PathBuf::from(path.clone() + "/dir1/dir1.1/file1"), "../../dir2/file2".to_string()).is_ok(), true);
         assert_eq!(PathBuf::from(path.clone() + "/dir2/file2").exists(), true);
