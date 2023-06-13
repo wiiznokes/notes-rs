@@ -230,7 +230,6 @@ impl Explorer {
 
 
     fn handle_event(&mut self, event: Event) {
-        println!("{:?}", event);
 
         match event.kind {
             ::notify::EventKind::Create(create_kind) => match create_kind {
