@@ -49,7 +49,7 @@ impl Application for Notes {
 
         let root_path = args.nth(1).map(PathBuf::from);
 
-        let root_path_clone = root_path.clone();
+        let root_path_clone = root_path;
 
         let app = Notes {
             actions: Actions::new(),
@@ -100,7 +100,7 @@ impl Application for Notes {
             .push(self.actions.view())
             .push(
                 Row::new()
-                    .push(self.dirs_tree.view(&self.explorer))
+                    .push(self.dirs_tree.view(&self.explorer, false))
                     .push(self.tab.view(self)),
             )
             .into()

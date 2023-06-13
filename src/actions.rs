@@ -50,9 +50,7 @@ impl Actions {
     }
 
     pub fn update(&mut self, message: ActMsg) -> Command<app::AppMsg> {
-        match message {
-            _ => { println!("{:?}", message); }
-        }
+        { println!("{:?}", message); }
 
         Command::none()
     }

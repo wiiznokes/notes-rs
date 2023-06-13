@@ -14,7 +14,7 @@ use iced::widget::scrollable::Properties;
 use iced_aw::ContextMenu;
 
 use crate::app::{self, AppMsg};
-use crate::explorer::{ActionType, Dir, Explorer, File, Node, search_node_by_path, XplMsg, PathId, EditNameType};
+use crate::explorer::{ActionType, Dir, Explorer, File, Node, search_node_by_path, XplMsg, PathId, EditNameType, XplImplReqMsg};
 use crate::{explorer, icons};
 use crate::notify;
 
@@ -26,6 +26,7 @@ pub struct Tree {
 #[derive(Clone, Debug)]
 pub enum TreeMsg {
     Open,
+    Xpl(XplImplReqMsg)
 }
 
 impl Tree {
@@ -40,21 +41,49 @@ impl Tree {
         message: TreeMsg,
         explorer_opt: &mut Option<Explorer>,
     ) -> Command<AppMsg> {
-        match explorer_opt {
-            Some(explorer) => match message {
-                TreeMsg::Open => {  }
-            },
 
-            _ => { panic!("no root_node, {:?}", message); }
+
+        match message {
+            TreeMsg::Open => {  }
+            TreeMsg::Xpl(msg) => match msg {
+                XplImplReqMsg::None => {},
+                XplImplReqMsg::RootHasBeenRemoved =>{
+                    *explorer_opt = None
+                },
+            },
+           
         }
         Command::none()
     }
 
 
-    pub fn view<'a>(&'a self, explorer_opt: &'a Option<Explorer>) -> Element<AppMsg> {
+    pub fn view<'a>(&'a self, explorer_opt: &'a Option<Explorer>, show_root_line: bool) -> Element<AppMsg> {
         let tree = match explorer_opt {
-            Some(explorer) => self.view_tree(&explorer.files, false),
-            _ => Text::new("nothing to show").into(),
+            Some(explorer) => match &explorer.files {
+                Node::Dir(com, dir) => {
+                    let mut lines: Vec<Element<AppMsg>> = Vec::new();
+
+                    let indent_space = match show_root_line {
+                        true => {
+                            lines.push(view_line(&explorer.files, 0f32));
+                            self.indent_space
+                        },
+                        false => {
+                            0f32
+                        },
+                    };
+
+                    if dir.is_expanded {
+                        self.view_tree_rec(dir, &mut lines, indent_space);
+                    }
+
+
+                    Scrollable::new(column(lines))
+                        .into()
+                },
+                Node::File(..) => no_tree()
+            }
+            _ => no_tree()
         };
 
         let content = Container::new(tree)
@@ -69,35 +98,12 @@ impl Tree {
     }
 
 
-    fn view_tree<'a>(&'a self, racine: &'a Node, show_root_line: bool) -> Element<AppMsg> {
-        let mut lines: Vec<Element<AppMsg>> = Vec::new();
-
-        let indent_space = match show_root_line {
-            true => {
-                lines.push(view_line(&racine, 0f32));
-                self.indent_space
-            },
-            false => {
-                0f32
-            },
-        };
-
-        let dir = racine.to_dir().unwrap();
-        if dir.is_expanded {
-            self.view_tree_rec(dir, &mut lines, indent_space);
-        }
-
-
-        Scrollable::new(column(lines))
-            .into()
-    }
-
 
     fn view_tree_rec<'a>(&'a self, racine: &'a Dir, lines: &mut Vec<Element<'a, AppMsg>>, indent: f32) {
         for node in racine.content.iter() {
             lines.push(view_line(node, indent));
 
-            if let Node::Dir(dir) = node {
+            if let Node::Dir(_, dir) = node {
                 if dir.is_expanded {
                     self.view_tree_rec(dir, lines, indent + self.indent_space);
                 }
@@ -107,11 +113,16 @@ impl Tree {
 
 }
 
-fn view_line<'a>(node: &'a Node, indent: f32) -> Element<'a, AppMsg> {
+
+fn no_tree<'a>() -> Element<'a, AppMsg> {
+    Text::new("nothing to show").into()
+}
+
+fn view_line(node: &Node, indent: f32) -> Element<AppMsg> {
 
     let icon: Element<AppMsg> = match node {
-        Node::Dir(dir) => {
-            let msg_icon = AppMsg::Explorer(XplMsg::Expand(PathId { path: dir.path.clone(), is_dir: true }));
+        Node::Dir(com, dir) => {
+            let msg_icon = AppMsg::Explorer(XplMsg::Expand(PathId { path: com.path.clone(), is_dir: true }));
             if dir.is_expanded {
                 Button::new(icons::chevron_down_icon())
                     .on_press(msg_icon).into()
@@ -121,13 +132,13 @@ fn view_line<'a>(node: &'a Node, indent: f32) -> Element<'a, AppMsg> {
             }
         }
 
-        Node::File(_) => {
+        Node::File(..) => {
             icons::file_icon().size(23).into()
         }
     };
 
-    let name: Element<AppMsg> = if node.is_name_is_edited() {
-        TextInput::new("dir name", &node.name_cached())
+    let name: Element<AppMsg> = if node.common().is_name_is_edited {
+        TextInput::new("dir name", &node.common().name_cached)
             .width(Length::Fill)
             .size(15)
             .on_input(|value| {
@@ -136,7 +147,7 @@ fn view_line<'a>(node: &'a Node, indent: f32) -> Element<'a, AppMsg> {
             .on_submit(AppMsg::Explorer(XplMsg::EditName(node.path_id(), EditNameType::Stop(ActionType::Ok))))
             .into()
     } else {
-        Text::new(node.name()).width(Length::Fill).size(15).into()
+        Text::new(&node.common().name).width(Length::Fill).size(15).into()
     };
 
     
@@ -162,6 +173,8 @@ fn view_line<'a>(node: &'a Node, indent: f32) -> Element<'a, AppMsg> {
                 AppMsg::Explorer(XplMsg::Paste(node.path_id()))).into(),
             Button::new(Text::new("Rename")).on_press(
                 AppMsg::Explorer(XplMsg::EditName(node.path_id(), EditNameType::Start))).into(),
+                Button::new(Text::new("Delete")).on_press(
+                    AppMsg::Explorer(XplMsg::Delete(node.path_id()))).into(),
         ]).into()
     ).into()
 
