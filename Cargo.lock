@@ -1066,7 +1066,7 @@ dependencies = [
 [[package]]
 name = "iced_aw"
 version = "0.5.2"
-source = "git+https://github.com/wiiznokes/iced_aw.git?branch=dev-context-menu#63bf7361bfed5a7d971e68af723b2ac9c51bcf1a"
+source = "git+https://github.com/iced-rs/iced_aw.git?rev=b9b576d5b95063e4beeeee9fa98aee184b9c3019#b9b576d5b95063e4beeeee9fa98aee184b9c3019"
 dependencies = [
  "chrono",
  "iced_graphics",
