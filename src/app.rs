@@ -3,21 +3,21 @@
 #![allow(dead_code)]
 
 use std::env;
-use std::path::{Path, PathBuf};
 use std::path;
+use std::path::{Path, PathBuf};
 
+use iced::futures::channel::mpsc::Sender;
+use iced::widget::Space;
+use iced::widget::{Column, Row};
+use iced::Element;
 use iced::{executor, Subscription};
 use iced::{Application, Command};
-use iced::Element;
-use iced::futures::channel::mpsc::Sender;
-use iced::widget::{Column, Row};
-use iced::widget::Space;
 
-use crate::{explorer, notify};
 use crate::actions::{self, Actions};
-use crate::explorer::{Dir, Explorer, File, Node};
+use crate::explorer::{Dir, Explorer, File, Node, PathId};
 use crate::tab::{self, Tab};
 use crate::tree::{self, Tree};
+use crate::{explorer, fs, notify};
 
 pub struct Notes {
     pub actions: Actions,
@@ -44,13 +44,6 @@ impl Application for Notes {
     type Flags = ();
 
     fn new(_flags: ()) -> (Self, Command<Self::Message>) {
-        let mut args = env::args();
-
-
-        let root_path = args.nth(1).map(PathBuf::from);
-
-        let root_path_clone = root_path;
-
         let app = Notes {
             actions: Actions::new(),
             dirs_tree: Tree::new(),
@@ -58,10 +51,16 @@ impl Application for Notes {
             explorer: None,
         };
 
-        let command = if let Some(path) = root_path_clone {
-            Command::perform(load(path), AppMsg::Loaded)
-        } else {
-            Command::none()
+        let command = match fs::get_absolute(env::args().nth(1).map(PathBuf::from)) {
+            Some(path_id) => {
+                if path_id.is_dir {
+                    Command::perform(load(path_id.path), AppMsg::Loaded)
+                } else {
+                    println!("todo: open file");
+                    Command::none()
+                }
+            }
+            None => Command::none(),
         };
 
         (app, command)

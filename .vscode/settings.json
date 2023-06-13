@@ -1,0 +1,4 @@
+{
+    "files.autoSave": "afterDelay",
+    "rust-analyzer.inlayHints.chainingHints.enable": false
+}

@@ -2,11 +2,11 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
+use iced::alignment;
+use iced::widget::{column, row, Button, Column, Container, Text, TextInput};
+use iced::window::icon;
 use iced::{Alignment, Command};
 use iced::{Element, Length};
-use iced::alignment;
-use iced::widget::{Button, column, Column, Container, row, Text, TextInput};
-use iced::window::icon;
 
 use crate::app::{self};
 use crate::icons;
