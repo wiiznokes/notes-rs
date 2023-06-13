@@ -17,6 +17,7 @@ mod icons;
 mod notify;
 mod button;
 mod fs;
+mod helper;
 
 pub fn main() -> iced::Result {
 

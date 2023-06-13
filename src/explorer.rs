@@ -2,7 +2,7 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
-use crate::fs;
+use crate::{fs, map_err_return, map_none_return};
 use std::ffi::OsStr;
 use std::path::{Iter, Path, PathBuf};
 
@@ -229,7 +229,6 @@ impl Explorer {
     }
 
 
-    // todo: remove all unwrap in this function
     fn handle_event(&mut self, event: Event) {
         println!("{:?}", event);
 
@@ -237,27 +236,23 @@ impl Explorer {
             ::notify::EventKind::Create(create_kind) => match create_kind {
                 ::notify::event::CreateKind::File => {
                     let path = &event.paths[0];
-                    let (com, dir) = match search_parent_node(&mut self.files, path.clone()) {
-                        Ok((com, dir)) => { (com, dir) },
-                        Err(e) => { println!("{:?}", e); return },
-                    };
+                    let (com, dir) = map_err_return!(search_parent_node(&mut self.files, path.clone()));
 
-
-                    insert_node_in_vec(
+                    map_err_return!(insert_node_in_vec(
                         &mut dir.content,
                         path,
                         false
-                    ).unwrap();
+                    ));
                 }
                 ::notify::event::CreateKind::Folder => {
                     let path = &event.paths[0];
-                    let (com, dir) = search_parent_node(&mut self.files, path.clone()).unwrap();
+                    let (com, dir) = map_err_return!(search_parent_node(&mut self.files, path.clone()));
 
-                    insert_node_in_vec(
+                    map_err_return!(insert_node_in_vec(
                         &mut dir.content,
                         path,
                         true
-                    ).unwrap();
+                    ));
                 }
                 _ => {}
             },
@@ -268,21 +263,23 @@ impl Explorer {
                         match rename_kind {
                             ::notify::event::RenameMode::To => {
                                 let path = &event.paths[0];
-                                let (com, dir) = search_parent_node(&mut self.files, path.clone()).unwrap();
+                                let (com, dir) = map_err_return!(search_parent_node(&mut self.files, path.clone()));
 
-                                insert_node_in_vec(
+                                map_err_return!(insert_node_in_vec(
                                     &mut dir.content,
                                     path,
                                     path.is_dir()
-                                ).unwrap();
+                                ));
                             }
                             ::notify::event::RenameMode::From => {
 
                                 let path = &event.paths[0];
-                                let (com, dir) = search_parent_node(&mut self.files, path.clone()).unwrap();
-                                // find index
-                                let name = path.file_name().unwrap().to_string_lossy().to_string();
-                                let index = get_index_unknown_type(name, &dir.content).unwrap();
+                                let (com, dir) = map_err_return!(search_parent_node(&mut self.files, path.clone()));
+
+                                let name = map_none_return!(path.file_name(), "can't find name {}", path.display())
+                                    .to_string_lossy().to_string();
+
+                                let index = map_err_return!(get_index_unknown_type(name, &dir.content));
 
                                 dir.content.remove(index);
                             }
@@ -297,25 +294,23 @@ impl Explorer {
 
                     ::notify::event::RemoveKind::File => {
                         let path = &event.paths[0];
-                        let (com, dir) = search_parent_node(&mut self.files, path.clone()).unwrap();
+                        let (com, dir) = map_err_return!(search_parent_node(&mut self.files, path.clone()));
 
-                        // find index
-                        let name = path.file_name().unwrap().to_string_lossy().to_string();
+                        let name = map_none_return!(path.file_name(), "can't find name {}", path.display())
+                            .to_string_lossy().to_string();
 
                         // see: https://github.com/notify-rs/notify/issues/493
-                        //let index = get_index_sorted(name, false, &dir.content).unwrap();
-
-                        let index = get_index_unknown_type(name, &dir.content).unwrap();
+                        let index = map_err_return!(get_index_sorted(name, false, &dir.content));
 
                         dir.content.remove(index);
                     }
                     ::notify::event::RemoveKind::Folder => {
                         let path = &event.paths[0];
-                        let (com, dir) = search_parent_node(&mut self.files, path.clone()).unwrap();
+                        let (com, dir) = map_err_return!(search_parent_node(&mut self.files, path.clone()));
 
-                        // find index
-                        let name = path.file_name().unwrap().to_string_lossy().to_string();
-                        let index = get_index_sorted(name, true, &dir.content).unwrap();
+                        let name = map_none_return!(path.file_name(), "can't find name {}", path.display())
+                            .to_string_lossy().to_string();
+                        let index = map_err_return!(get_index_sorted(name, true, &dir.content));
 
                         dir.content.remove(index);
                     }
