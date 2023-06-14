@@ -2,6 +2,7 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
+use std::cell::RefCell;
 use std::env;
 use std::path;
 use std::path::{Path, PathBuf};
@@ -39,12 +40,11 @@ pub struct Notes {
     pub tab: Tab,
 
     pub explorer: Option<Explorer>,
-    pub watcher: Arc<Sender<notify::NtfMsg>>
+    pub watcher: Arc<RefCell<Sender<notify::NtfMsg>>>
 }
 
 #[derive(Debug, Clone)]
 pub enum AppMsg {
-    Loaded(Result<Explorer, String>),
 
     Explorer(file_struct::XplMsg),
     Actions(actions::ActMsg),
@@ -73,12 +73,13 @@ impl Application for State {
             State::Waiting => {
                 if let AppMsg::Explorer(XplMsg::Watcher(notify::NtfMsg::Waiting(watcher))) = message {
 
-                    let watcher_rc = Arc::new(watcher);
+                    let watcher_ref_cell = RefCell::new(watcher);
+                    let watcher_arc = Arc::new(watcher_ref_cell);
 
                     let explorer = if let Some(path_id) = fs::get_absolute(env::args().nth(1).map(PathBuf::from)) {
                         if path_id.is_dir {
 
-                            Some(Explorer::new(path_id.path, Arc::clone(&watcher_rc)).unwrap())
+                            Some(Explorer::new(path_id.path, Arc::clone(&watcher_arc)).unwrap())
                             
                         } else {
                             println!("todo: open file");
@@ -89,13 +90,13 @@ impl Application for State {
                     };
 
 
-                    self = &mut State::Ready(
+                    *self = State::Ready(
                         Notes {
                             actions: Actions::new(), 
                             dirs_tree: Tree::new(), 
                             tab: Tab::new(), 
-                            explorer: explorer,
-                            watcher: Arc::clone(&watcher_rc),
+                            explorer,
+                            watcher: watcher_arc,
                         }
                     );
 
@@ -114,14 +115,6 @@ impl Application for State {
                         }
                     }
                 }
-                AppMsg::Loaded(res) => match res {
-                    Ok(explorer) => {
-                        notes.explorer = Some(explorer);
-                    }
-                    Err(error) => {
-                        println!("{error}");
-                    }
-                },
     
                 AppMsg::Actions(msg) => return notes.actions.update(msg),
                 AppMsg::DirsTree(msg) => return notes.dirs_tree.update(msg, &mut notes.explorer),

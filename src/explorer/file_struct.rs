@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use std::cell::RefCell;
 use std::ffi::OsStr;
 use std::path::{Iter, Path, PathBuf};
 use std::rc::Rc;
@@ -21,7 +22,7 @@ pub struct Explorer {
     pub files: Node,
     pub root_path: PathBuf,
 
-    pub watcher: Arc<Sender<notify::NtfMsg>>,
+    pub watcher: Arc<RefCell<Sender<notify::NtfMsg>>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -153,7 +154,7 @@ impl Explorer {
     /// Construct a node of type Dir from a path
     ///
     /// Condition: root_path is a dir
-    pub fn new(path: PathBuf, watcher: Arc<Sender<NtfMsg>>) -> Result<Self, String> {
+    pub fn new(path: PathBuf, watcher: Arc<RefCell<Sender<NtfMsg>>>) -> Result<Self, String> {
         if !fs::is_dir_exist(&path).unwrap_or(false) {
             return Err(format!(
                 "path {} is not a directory",
@@ -180,7 +181,7 @@ impl Explorer {
         fill_dir_content(&mut content, &path);
 
         // may cause bug (idk)
-        watcher
+        watcher.borrow_mut()
             .try_send(notify::NtfMsg::Watch(path.clone()))
             .expect("can't send to watcher");
 
@@ -354,7 +355,7 @@ impl Explorer {
             dir.has_been_expanded = true;
 
             
-            self.watcher
+            self.watcher.borrow_mut()
                 .try_send(notify::NtfMsg::Watch(com.path.clone()))
                 .expect("error trying to send to watcher");
         }
