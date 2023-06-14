@@ -2,21 +2,25 @@
 
 use std::ffi::OsStr;
 use std::path::{Iter, Path, PathBuf};
+use std::rc::Rc;
 
 use ::notify::Event;
 use iced::futures::channel::mpsc::Sender;
 use iced::Command;
 use path_clean::PathClean;
 
+use crate::app::AppMsg;
 use crate::explorer::notify;
 use crate::{helpers::fs, map_err_return, map_none_return};
+
+use super::notify::NtfMsg;
 
 #[derive(Debug, Clone)]
 pub struct Explorer {
     pub files: Node,
     pub root_path: PathBuf,
 
-    watcher: Option<Sender<notify::NtfMsg>>,
+    pub watcher: Rc<Sender<notify::NtfMsg>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -148,7 +152,7 @@ impl Explorer {
     /// Construct a node of type Dir from a path
     ///
     /// Condition: root_path is a dir
-    pub fn new(path: PathBuf) -> Result<Self, String> {
+    pub fn new(path: PathBuf, watcher: Rc<Sender<NtfMsg>>) -> Result<Self, String> {
         if !fs::is_dir_exist(&path).unwrap_or(false) {
             return Err(format!(
                 "path {} is not a directory",
@@ -174,6 +178,11 @@ impl Explorer {
 
         fill_dir_content(&mut content, &path);
 
+        // may cause bug (idk)
+        watcher
+            .try_send(notify::NtfMsg::Watch(path.clone()))
+            .expect("can't send to watcher");
+
         Ok(Explorer {
             files: Node::Dir(
                 CommonNode {
@@ -188,23 +197,16 @@ impl Explorer {
                 },
             ),
             root_path: path,
-            watcher: None,
+            watcher,
         })
     }
+
+
 
     pub fn handle_message(&mut self, message: XplMsg) -> Option<XplResult> {
         match message {
             XplMsg::Watcher(msg) => match msg {
-                notify::NtfMsg::Waiting(mut watcher) => {
-                    println!("received from watcher: Waiting");
-                    watcher
-                        .try_send(notify::NtfMsg::Watch(self.root_path.clone()))
-                        .expect("can't send to watcher");
-
-                    self.watcher = Some(watcher);
-                }
                 notify::NtfMsg::Event(event) => return self.handle_event(event),
-
                 _ => panic!("{:?}", msg),
             },
             XplMsg::New(_) => {}
@@ -350,11 +352,10 @@ impl Explorer {
             dir.is_expanded = !dir.is_expanded;
             dir.has_been_expanded = true;
 
-            if let Some(ref mut watcher) = self.watcher {
-                watcher
-                    .try_send(notify::NtfMsg::Watch(com.path.clone()))
-                    .expect("error trying to send to watcher");
-            }
+            
+            self.watcher
+                .try_send(notify::NtfMsg::Watch(com.path.clone()))
+                .expect("error trying to send to watcher");
         }
     }
 

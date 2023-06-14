@@ -5,20 +5,32 @@
 use std::env;
 use std::path;
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
 use iced::futures::channel::mpsc::Sender;
 use iced::widget::Space;
+use iced::widget::Text;
 use iced::widget::{Column, Row};
 use iced::Element;
 use iced::{executor, Subscription};
 use iced::{Application, Command};
 
+use crate::explorer::file_struct::XplMsg;
 use crate::explorer::file_struct::{Dir, Explorer, File, Node, PathId};
+use crate::explorer::notify::NtfMsg;
 use crate::explorer::{file_struct, notify};
 use crate::helpers::fs;
 use crate::tabs::tab::{self, Tab};
 use crate::top_bar::actions::{self, Actions};
 use crate::widgets::tree::{self, Tree};
+
+
+
+
+pub enum State {
+    Waiting,
+    Ready(Notes)
+}
 
 pub struct Notes {
     pub actions: Actions,
@@ -26,6 +38,7 @@ pub struct Notes {
     pub tab: Tab,
 
     pub explorer: Option<Explorer>,
+    pub watcher: Rc<Sender<notify::NtfMsg>>
 }
 
 #[derive(Debug, Clone)]
@@ -38,33 +51,15 @@ pub enum AppMsg {
     Tab(tab::TabMsg),
 }
 
-impl Application for Notes {
+impl Application for State {
     type Executor = executor::Default;
     type Message = AppMsg;
     type Theme = iced::Theme;
     type Flags = ();
 
     fn new(_flags: ()) -> (Self, Command<Self::Message>) {
-        let app = Notes {
-            actions: Actions::new(),
-            dirs_tree: Tree::new(),
-            tab: Tab::new(),
-            explorer: None,
-        };
 
-        let command = match fs::get_absolute(env::args().nth(1).map(PathBuf::from)) {
-            Some(path_id) => {
-                if path_id.is_dir {
-                    Command::perform(load(path_id.path), AppMsg::Loaded)
-                } else {
-                    println!("todo: open file");
-                    Command::none()
-                }
-            }
-            None => Command::none(),
-        };
-
-        (app, command)
+        (State::Waiting, Command::none())
     }
 
     fn title(&self) -> String {
@@ -72,47 +67,82 @@ impl Application for Notes {
     }
 
     fn update(&mut self, message: AppMsg) -> Command<Self::Message> {
-        match message {
-            AppMsg::Explorer(msg) => {
-                if let Some(ref mut explorer) = self.explorer {
-                    match explorer.handle_message(msg) {
-                        Some(res) => {
-                            match res {
-                                file_struct::XplResult::RootHasBeenRemoved => {
-                                    self.explorer = None
-                                },
-                            }
-                        },
-                        None => {},
+
+        match self {
+            State::Waiting => {
+                if let AppMsg::Explorer(XplMsg::Watcher(notify::NtfMsg::Waiting(watcher))) = message {
+
+                    let watcher_rc = Rc::new(watcher);
+                    self = &mut State::Ready(
+                        Notes { 
+                            actions: Actions::new(), 
+                            dirs_tree: Tree::new(), 
+                            tab: Tab::new(), 
+                            explorer: None,
+                            watcher: Rc::clone(&watcher_rc),
+                        }
+                    );
+
+                    if let Some(path_id) = fs::get_absolute(env::args().nth(1).map(PathBuf::from)) {
+                        if path_id.is_dir {
+                            
+                            return Command::perform(load(path_id.path, Rc::clone(&watcher_rc)), AppMsg::Loaded)
+                        } else {
+                            println!("todo: open file");
+                            return Command::none()
+                        }
                     }
                 }
             }
-            AppMsg::Loaded(res) => match res {
-                Ok(explorer) => {
-                    self.explorer = Some(explorer);
+            State::Ready(notes) => {
+                match message {
+                    AppMsg::Explorer(msg) => {
+                    if let Some(ref mut explorer) = notes.explorer {
+                        if let Some(res) = explorer.handle_message(msg) {
+                            match res {
+                                file_struct::XplResult::RootHasBeenRemoved => {
+                                    notes.explorer = None
+                                },
+                            }
+                        }
+                    }
                 }
-                Err(error) => {
-                    println!("{error}");
-                }
-            },
-
-            AppMsg::Actions(msg) => return self.actions.update(msg),
-            AppMsg::DirsTree(msg) => return self.dirs_tree.update(msg, &mut self.explorer),
-            AppMsg::Tab(msg) => return self.tab.update(msg),
+                AppMsg::Loaded(res) => match res {
+                    Ok(explorer) => {
+                        notes.explorer = Some(explorer);
+                    }
+                    Err(error) => {
+                        println!("{error}");
+                    }
+                },
+    
+                AppMsg::Actions(msg) => return notes.actions.update(msg),
+                AppMsg::DirsTree(msg) => return notes.dirs_tree.update(msg, &mut notes.explorer),
+                AppMsg::Tab(msg) => return notes.tab.update(msg),
+            }
         }
+        };
+        
         Command::none()
     }
 
     fn view(&self) -> Element<AppMsg> {
-        Column::new()
-            .push(Space::new(0, 5))
-            .push(self.actions.view())
-            .push(
-                Row::new()
-                    .push(self.dirs_tree.view(&self.explorer, false))
-                    .push(self.tab.view(self)),
-            )
-            .into()
+        match self {
+            State::Waiting => {
+                Text::new("loading...").into()
+            },
+            State::Ready(notes) => {
+                Column::new()
+                .push(Space::new(0, 5))
+                .push(notes.actions.view())
+                .push(
+                    Row::new()
+                        .push(notes.dirs_tree.view(&notes.explorer, false))
+                        .push(notes.tab.view(notes)),
+                )
+                .into()
+            },
+        }
     }
 
     fn subscription(&self) -> Subscription<AppMsg> {
@@ -121,6 +151,6 @@ impl Application for Notes {
     }
 }
 
-async fn load(path: PathBuf) -> Result<Explorer, String> {
-    Explorer::new(path)
+async fn load(path: PathBuf, watcher: Rc<Sender<NtfMsg>>) -> Result<Explorer, String> {
+    Explorer::new(path, watcher)
 }
