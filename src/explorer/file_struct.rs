@@ -477,6 +477,8 @@ fn insert_node_in_vec(content: &mut Vec<Node>, path: &Path, is_dir: bool) -> Res
     Ok(())
 }
 
+// todo: 11 before 100
+
 /// If the value is found then [`Ok`] is returned, containing the index of the matching element.
 /// If the value is not found then [`Err`] is returned,
 /// containing the index where a matching element could be inserted while maintaining sorted order
