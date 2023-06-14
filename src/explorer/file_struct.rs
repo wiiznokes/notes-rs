@@ -497,7 +497,7 @@ fn get_index_sorted(name: String, is_dir: bool, content: &[Node]) -> Result<usiz
         (
             !n.is_dir(),
             n.common().name.to_lowercase(),
-            n.common().clone().name,
+            n.common().clone().name, 
         )
     })
 }

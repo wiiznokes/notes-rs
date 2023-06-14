@@ -1,4 +1,4 @@
-# Notes
+# [Notes](https://github.com/wiiznokes/notes-rs)
 
 ## Todo
 
@@ -6,9 +6,14 @@
 - [x] right click for actions
 - [x] rename
 - [x] delete
-- [ ] create file / dir
 - [x] handle relative / absolute path
 - [x] impl of notify events
+- [ ] open dir from app
+- [ ] create file / dir
+- [ ] fix explorer number display (11 before 100)
+- [ ] settings with [serde](https://github.com/serde-rs/serde) in [toml](https://github.com/toml-rs/toml)
+- [ ] config file for shared and local with [directories](https://github.com/dirs-dev/directories-rs)
+- [ ] open file from app
 
 ## Goal
 
@@ -20,6 +25,7 @@ modular as possible.
 - tabs
 - buttons to launch custom script (like `git pull`)
 - support for various formats (pdf, md, html, txt)
+- Settings
 
 ## Rust
 
