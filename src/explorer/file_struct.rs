@@ -22,7 +22,7 @@ pub struct Explorer {
     pub files: Node,
     pub root_path: PathBuf,
 
-    pub watcher: Arc<RefCell<Sender<notify::NtfMsg>>>,
+    pub watcher: Rc<RefCell<Sender<notify::NtfMsg>>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -154,7 +154,7 @@ impl Explorer {
     /// Construct a node of type Dir from a path
     ///
     /// Condition: root_path is a dir
-    pub fn new(path: PathBuf, watcher: Arc<RefCell<Sender<NtfMsg>>>) -> Result<Self, String> {
+    pub fn new(path: PathBuf, watcher: Rc<RefCell<Sender<NtfMsg>>>) -> Result<Self, String> {
         if !fs::is_dir_exist(&path).unwrap_or(false) {
             return Err(format!(
                 "path {} is not a directory",

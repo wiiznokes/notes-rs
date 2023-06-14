@@ -1,0 +1,20 @@
+J'essaie de faire un editeur de code avec Iced. Pour l'instant, je travaille sur l'explorateur de fichier. J'aimerai avoir ce comportement, plutôt basique:
+
+- on peut ouvrir l'application en lui donnant un dossier en argument
+- on peut aussi l'ouvrir sans argument
+- on peut ouvrir un dossier au runtime
+
+Pour mon explorateur, j'ai une structure que je stocke dans le state de mon app:
+
+struct State { 
+    explorer: Option<Explorer>
+}
+
+Voici mon probleme:
+J'utilise un watcher (notify) pour surveiller le directory ouvert. Ce thread doit pouvoir renvoyer des messages, car la structure explorer doit être modifier.
+Ma premiere idée était de creer une subscription qui renvoie le watcher, que je stocke à la fois dans State et dans Explorer.
+Pour ca j'ai besoin d'utiliser 
+watcher: Rc<RefCell<Sender<notify::NtfMsg>>>
+
+
+Mais je me dis que ca serait plus simple si je pouvais simplement 

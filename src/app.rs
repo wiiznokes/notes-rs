@@ -40,7 +40,7 @@ pub struct Notes {
     pub tab: Tab,
 
     pub explorer: Option<Explorer>,
-    pub watcher: Arc<RefCell<Sender<notify::NtfMsg>>>
+    pub watcher: Rc<RefCell<Sender<notify::NtfMsg>>>
 }
 
 #[derive(Debug, Clone)]
@@ -74,12 +74,12 @@ impl Application for State {
                 if let AppMsg::Explorer(XplMsg::Watcher(notify::NtfMsg::Waiting(watcher))) = message {
 
                     let watcher_ref_cell = RefCell::new(watcher);
-                    let watcher_arc = Arc::new(watcher_ref_cell);
+                    let watcher_arc = Rc::new(watcher_ref_cell);
 
                     let explorer = if let Some(path_id) = fs::get_absolute(env::args().nth(1).map(PathBuf::from)) {
                         if path_id.is_dir {
 
-                            Some(Explorer::new(path_id.path, Arc::clone(&watcher_arc)).unwrap())
+                            Some(Explorer::new(path_id.path, Rc::clone(&watcher_arc)).unwrap())
                             
                         } else {
                             println!("todo: open file");
