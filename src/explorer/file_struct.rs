@@ -180,7 +180,6 @@ impl Explorer {
 
         fill_dir_content(&mut content, &path);
 
-        // may cause bug (idk)
         watcher.borrow_mut()
             .try_send(notify::NtfMsg::Watch(path.clone()))
             .expect("can't send to watcher");

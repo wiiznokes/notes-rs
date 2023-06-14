@@ -74,12 +74,12 @@ impl Application for State {
                 if let AppMsg::Explorer(XplMsg::Watcher(notify::NtfMsg::Waiting(watcher))) = message {
 
                     let watcher_ref_cell = RefCell::new(watcher);
-                    let watcher_arc = Rc::new(watcher_ref_cell);
+                    let watcher_rc = Rc::new(watcher_ref_cell);
 
                     let explorer = if let Some(path_id) = fs::get_absolute(env::args().nth(1).map(PathBuf::from)) {
                         if path_id.is_dir {
 
-                            Some(Explorer::new(path_id.path, Rc::clone(&watcher_arc)).unwrap())
+                            Some(Explorer::new(path_id.path, Rc::clone(&watcher_rc)).unwrap())
                             
                         } else {
                             println!("todo: open file");
@@ -96,7 +96,7 @@ impl Application for State {
                             dirs_tree: Tree::new(), 
                             tab: Tab::new(), 
                             explorer,
-                            watcher: watcher_arc,
+                            watcher: watcher_rc,
                         }
                     );
 
