@@ -12,10 +12,10 @@ mod top_bar;
 mod widgets;
 
 mod app;
-use app::Notes;
+use app::{Notes, State};
 
 pub fn main() -> iced::Result {
     //env::set_var("RUST_BACKTRACE", "full");
 
-    Notes::run(Settings::default())
+    State::run(Settings::default())
 }
