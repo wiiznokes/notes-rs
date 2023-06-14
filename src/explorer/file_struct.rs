@@ -58,7 +58,6 @@ pub enum XplMsg {
     Expand(PathId),
 }
 
-
 #[derive(Debug, Clone)]
 pub struct CommonNode {
     pub path: PathBuf,
@@ -142,13 +141,10 @@ impl Node {
     }
 }
 
-
 #[derive(Debug, Clone)]
 pub enum XplResult {
     RootHasBeenRemoved,
 }
-
-
 
 impl Explorer {
     /// Construct a node of type Dir from a path
@@ -180,7 +176,8 @@ impl Explorer {
 
         fill_dir_content(&mut content, &path);
 
-        watcher.borrow_mut()
+        watcher
+            .borrow_mut()
             .try_send(notify::NtfMsg::Watch(path.clone()))
             .expect("can't send to watcher");
 
@@ -201,8 +198,6 @@ impl Explorer {
             watcher,
         })
     }
-
-
 
     pub fn handle_message(&mut self, message: XplMsg) -> Option<XplResult> {
         match message {
@@ -267,7 +262,7 @@ impl Explorer {
                             println!("root path has been removed");
                             return Some(XplResult::RootHasBeenRemoved);
                         }
-                        
+
                         let (com, dir) =
                             map_err_return!(search_parent_node(&mut self.files, path.clone()));
 
@@ -353,8 +348,8 @@ impl Explorer {
             dir.is_expanded = !dir.is_expanded;
             dir.has_been_expanded = true;
 
-            
-            self.watcher.borrow_mut()
+            self.watcher
+                .borrow_mut()
                 .try_send(notify::NtfMsg::Watch(com.path.clone()))
                 .expect("error trying to send to watcher");
         }
