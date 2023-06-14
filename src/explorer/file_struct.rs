@@ -3,6 +3,7 @@
 use std::ffi::OsStr;
 use std::path::{Iter, Path, PathBuf};
 use std::rc::Rc;
+use std::sync::Arc;
 
 use ::notify::Event;
 use iced::futures::channel::mpsc::Sender;
@@ -20,7 +21,7 @@ pub struct Explorer {
     pub files: Node,
     pub root_path: PathBuf,
 
-    pub watcher: Rc<Sender<notify::NtfMsg>>,
+    pub watcher: Arc<Sender<notify::NtfMsg>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -152,7 +153,7 @@ impl Explorer {
     /// Construct a node of type Dir from a path
     ///
     /// Condition: root_path is a dir
-    pub fn new(path: PathBuf, watcher: Rc<Sender<NtfMsg>>) -> Result<Self, String> {
+    pub fn new(path: PathBuf, watcher: Arc<Sender<NtfMsg>>) -> Result<Self, String> {
         if !fs::is_dir_exist(&path).unwrap_or(false) {
             return Err(format!(
                 "path {} is not a directory",

@@ -6,6 +6,7 @@ use std::env;
 use std::path;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
+use std::sync::Arc;
 
 use iced::futures::channel::mpsc::Sender;
 use iced::widget::Space;
@@ -38,7 +39,7 @@ pub struct Notes {
     pub tab: Tab,
 
     pub explorer: Option<Explorer>,
-    pub watcher: Rc<Sender<notify::NtfMsg>>
+    pub watcher: Arc<Sender<notify::NtfMsg>>
 }
 
 #[derive(Debug, Clone)]
@@ -72,26 +73,32 @@ impl Application for State {
             State::Waiting => {
                 if let AppMsg::Explorer(XplMsg::Watcher(notify::NtfMsg::Waiting(watcher))) = message {
 
-                    let watcher_rc = Rc::new(watcher);
+                    let watcher_rc = Arc::new(watcher);
+
+                    let explorer = if let Some(path_id) = fs::get_absolute(env::args().nth(1).map(PathBuf::from)) {
+                        if path_id.is_dir {
+
+                            Some(Explorer::new(path_id.path, Arc::clone(&watcher_rc)).unwrap())
+                            
+                        } else {
+                            println!("todo: open file");
+                            None
+                        }
+                    } else {
+                        None
+                    };
+
+
                     self = &mut State::Ready(
-                        Notes { 
+                        Notes {
                             actions: Actions::new(), 
                             dirs_tree: Tree::new(), 
                             tab: Tab::new(), 
-                            explorer: None,
-                            watcher: Rc::clone(&watcher_rc),
+                            explorer: explorer,
+                            watcher: Arc::clone(&watcher_rc),
                         }
                     );
 
-                    if let Some(path_id) = fs::get_absolute(env::args().nth(1).map(PathBuf::from)) {
-                        if path_id.is_dir {
-                            
-                            return Command::perform(load(path_id.path, Rc::clone(&watcher_rc)), AppMsg::Loaded)
-                        } else {
-                            println!("todo: open file");
-                            return Command::none()
-                        }
-                    }
                 }
             }
             State::Ready(notes) => {
@@ -151,6 +158,3 @@ impl Application for State {
     }
 }
 
-async fn load(path: PathBuf, watcher: Rc<Sender<NtfMsg>>) -> Result<Explorer, String> {
-    Explorer::new(path, watcher)
-}
