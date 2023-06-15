@@ -1,5 +1,7 @@
 # [Notes](https://github.com/wiiznokes/notes-rs)
 
+Now in https://github.com/wiiznokes/note
+
 ## Todo
 
 - [x] view root directory in explorer
