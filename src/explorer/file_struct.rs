@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use std::cell::RefCell;
+use std::cmp::Ordering;
 use std::ffi::OsStr;
 use std::path::{Iter, Path, PathBuf};
 use std::rc::Rc;
@@ -15,6 +16,7 @@ use crate::app::AppMsg;
 use crate::explorer::notify;
 use crate::{helpers::fs, map_err_return, map_none_return};
 
+use super::binary_search::get_index_sorted;
 use super::notify::NtfMsg;
 
 #[derive(Debug, Clone)]
@@ -473,163 +475,6 @@ fn insert_node_in_vec(content: &mut Vec<Node>, path: &Path, is_dir: bool) -> Res
     }
     Ok(())
 }
-
-// todo: 11 before 100
-
-/// If the value is found then [`Ok`] is returned, containing the index of the matching element.
-/// If the value is not found then [`Err`] is returned,
-/// containing the index where a matching element could be inserted while maintaining sorted order
-///
-/// Sorting follow this rules:
-/// - all directory before files
-/// - alpha numeric (ASCII), with case insensitive (a = A)
-///
-/// Condition: content must be sorted with this rules before using this function
-fn get_index_sorted(name: String, is_dir: bool, content: &[Node]) -> Result<usize, usize> {
-    // notice we use negation when node is a dir
-    // because 0 will have a smaller index than 1
-    //
-    // we lower all letter because 'A' < '_' < 'a' in ASCII, and
-    // I prefer having '.' and '_' files on top
-
-    // we use a third key in case of equality, because Linux is sensitive (a != A)
-    content.binary_search_by_key(
-        &(
-            !is_dir,
-            extract_for_search(&name, true),
-            extract_for_search(&name, false),
-        ),
-        |n| {
-            (
-                !n.is_dir(),
-                extract_for_search(&n.common().name, true),
-                extract_for_search(&n.common().name, false),
-            )
-        },
-    )
-}
-
-
-#[derive(Debug, Clone)]
-enum StrOrI32 {
-    Str(String),
-    I32(i32),
-}
-
-impl Ord for StrOrI32 {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match (self, other) {
-            (StrOrI32::Str(str1), StrOrI32::Str(str2)) => str1.cmp(str2),
-            (StrOrI32::I32(num1), StrOrI32::I32(num2)) => num1.cmp(num2),
-            (StrOrI32::Str(_), StrOrI32::I32(_)) => std::cmp::Ordering::Less,
-            (StrOrI32::I32(_), StrOrI32::Str(_)) => std::cmp::Ordering::Greater,
-        }
-    }
-}
-
-impl PartialOrd for StrOrI32 {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        todo!()
-    }
-}
-
-impl PartialEq for StrOrI32 {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Str(l0), Self::Str(r0)) => l0 == r0,
-            (Self::I32(l0), Self::I32(r0)) => l0 == r0,
-            _ => false,
-        }
-    }
-}
-
-impl Eq for StrOrI32 {
-    
-}
-
-enum State {
-    Start,
-    String,
-    Number
-}
-
-fn extract_for_search(name: &String, lower: bool) -> Vec<StrOrI32> {
-    let mut result = Vec::new();
-    let mut current_str = String::new();
-    let mut current_num = String::new();
-    let mut state = State::Start;
-
-    for c in name.chars() { 
-        match state {
-            State::Start => {
-                if c.is_digit(10) {
-                    state = State::Number;
-                    current_num.push(c);
-                } else {
-                    state = State::String;
-                    if lower {
-                        current_str.push(c.to_lowercase().next().unwrap());
-                    } else {
-                        current_str.push(c);
-                    }
-                }
-            },
-            State::String => {
-                if c.is_digit(10) {
-                    result.push(StrOrI32::Str(current_str.clone()));
-                    current_str.clear();
-                    state = State::Number;
-                    current_num.push(c);
-                } else {
-                    if lower {
-                        current_str.push(c.to_lowercase().next().unwrap());
-                    } else {
-                        current_str.push(c);
-                    }
-                }
-            },
-            State::Number => {
-                if c.is_digit(10) {
-                    current_num.push(c);
-                } else {
-                    let i = current_num.parse::<i32>().unwrap();
-                    result.push(StrOrI32::I32(i));
-                    current_num.clear();
-                    state = State::String;
-                    if lower {
-                        current_str.push(c.to_lowercase().next().unwrap());
-                    } else {
-                        current_str.push(c);
-                    }
-                }
-            },
-        }
-    }
-    match state {
-        State::Start => { },
-        State::String => { result.push(StrOrI32::Str(current_str)); },
-        State::Number => {
-            let i = current_num.parse::<i32>().unwrap();
-            result.push(StrOrI32::I32(i));
-        },
-    }
-
-    dbg!(&result);
-    result
-}
-
-
-fn extract_numeric_part(name: &str) -> Option<usize> {
-    let numeric_part: String = name.chars().filter(|c| c.is_numeric()).collect();
-    numeric_part.parse().ok()
-}
-
-
-
-
-
-
-
 
 /// if a node with the same name is found, return this index, else return [`Err`]
 fn get_index_unknown_type(name: String, content: &[Node]) -> Result<usize, String> {
