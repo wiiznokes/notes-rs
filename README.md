@@ -8,11 +8,12 @@
 - [x] delete
 - [x] handle relative / absolute path
 - [x] impl of notify events
-- [ ] open dir from app
-- [ ] create file / dir
-- [ ] fix explorer number display (11 before 100)
+- [x] open dir from app
+- [x] fix explorer number display (11 before 100)
 - [ ] settings with [serde](https://github.com/serde-rs/serde) in [toml](https://github.com/toml-rs/toml)
 - [ ] config file for shared and local with [directories](https://github.com/dirs-dev/directories-rs)
+- [ ] unwatch all directory in notify
+- [ ] create file / dir
 - [ ] open file from app
 
 ## Goal
@@ -52,6 +53,9 @@ modular as possible.
 ## search engine
 
 - [seroost](https://github.com/tsoding/seroost)
+
+file picker
+https://github.com/PolyMeilex/rfd
 
 ## UI
 

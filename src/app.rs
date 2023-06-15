@@ -16,6 +16,7 @@ use iced::widget::{Column, Row};
 use iced::Element;
 use iced::{executor, Subscription};
 use iced::{Application, Command};
+use rfd::FileDialog;
 
 use crate::explorer::file_struct::XplMsg;
 use crate::explorer::file_struct::{Dir, Explorer, File, Node, PathId};
@@ -103,7 +104,24 @@ impl Application for State {
                     }
                 }
 
-                AppMsg::Actions(msg) => return notes.actions.update(msg),
+                AppMsg::Actions(msg) => {
+                    match msg {
+                        actions::ActMsg::OpenFolder => {
+                            let path_to_open = FileDialog::new()
+                                .set_directory("/")
+                                .set_title("Select folder to open in notes_rs")
+                                .pick_folder();
+
+                            if let Some(path) = path_to_open {
+                                // todo: tell watcher to stop watch all directories
+
+                                notes.explorer =
+                                    Some(Explorer::new(path, Rc::clone(&notes.watcher)).unwrap())
+                            }
+                        }
+                        _ => return notes.actions.update(msg),
+                    }
+                }
                 AppMsg::DirsTree(msg) => return notes.dirs_tree.update(msg, &mut notes.explorer),
                 AppMsg::Tab(msg) => return notes.tab.update(msg),
             },
