@@ -4,5 +4,5 @@ clear
 
 cargo build --release
 
-./target/release/notes_rs ./tmp
+./target/release/notes_rs tmp
 

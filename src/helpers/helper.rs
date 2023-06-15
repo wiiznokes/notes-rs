@@ -5,7 +5,7 @@ macro_rules! map_err_return {
             Ok(value) => value,
             Err(err) => {
                 eprintln!("{:?}", err);
-                return;
+                return None;
             }
         }
     };
@@ -18,7 +18,7 @@ macro_rules! map_none_return {
             Some(value) => value,
             None => {
                 eprintln!($err_msg, $($arg),*);
-                return;
+                return None;
             }
         }
     };

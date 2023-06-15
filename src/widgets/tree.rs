@@ -1,5 +1,3 @@
-#![allow(unused_imports)]
-#![allow(unused_variables)]
 #![allow(dead_code)]
 
 use std::cell::RefCell;
@@ -16,12 +14,11 @@ use iced::{Element, Length};
 use iced_aw::ContextMenu;
 
 use crate::app::{self, AppMsg};
-use crate::explorer::{
-    search_node_by_path, ActionType, Dir, EditNameType, Explorer, File, Node, PathId,
-    XplImplReqMsg, XplMsg,
+use crate::explorer::file_struct::{
+    ActionType, Dir, EditNameType, Explorer, File, Node, PathId, XplMsg, XplResult,
 };
-use crate::notify;
-use crate::{explorer, icons};
+use crate::explorer::notify;
+use crate::{explorer::file_struct, helpers::icons};
 
 pub struct Tree {
     indent_space: f32,
@@ -30,7 +27,7 @@ pub struct Tree {
 #[derive(Clone, Debug)]
 pub enum TreeMsg {
     Open,
-    Xpl(XplImplReqMsg),
+    Xpl(XplResult),
 }
 
 impl Tree {
@@ -48,8 +45,7 @@ impl Tree {
         match message {
             TreeMsg::Open => {}
             TreeMsg::Xpl(msg) => match msg {
-                XplImplReqMsg::None => {}
-                XplImplReqMsg::RootHasBeenRemoved => *explorer_opt = None,
+                XplResult::RootHasBeenRemoved => *explorer_opt = None,
             },
         }
         Command::none()

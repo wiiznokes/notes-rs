@@ -1,4 +1,4 @@
-# Notes
+# [Notes](https://github.com/wiiznokes/notes-rs)
 
 ## Todo
 
@@ -6,9 +6,15 @@
 - [x] right click for actions
 - [x] rename
 - [x] delete
-- [ ] create file / dir
 - [x] handle relative / absolute path
 - [x] impl of notify events
+- [x] open dir from app
+- [x] fix explorer number display (11 before 100)
+- [ ] settings with [serde](https://github.com/serde-rs/serde) in [toml](https://github.com/toml-rs/toml)
+- [ ] config file for shared and local with [directories](https://github.com/dirs-dev/directories-rs)
+- [ ] unwatch all directory in notify
+- [ ] create file / dir
+- [ ] open file from app
 
 ## Goal
 
@@ -20,6 +26,7 @@ modular as possible.
 - tabs
 - buttons to launch custom script (like `git pull`)
 - support for various formats (pdf, md, html, txt)
+- Settings
 
 ## Rust
 
@@ -47,6 +54,9 @@ modular as possible.
 
 - [seroost](https://github.com/tsoding/seroost)
 
+file picker
+https://github.com/PolyMeilex/rfd
+
 ## UI
 
 UI structure will look something like [this](./asset/app.pdf).
@@ -73,3 +83,9 @@ sudo dnf install rust-gdk-sys+default-devel
 - https://icons.getbootstrap.com/icons/folder/
 - https://icons.getbootstrap.com/icons/chevron-down/
 - https://icons.getbootstrap.com/icons/chevron-right/
+
+
+### autofix
+```
+cargo clippy --all --fix --allow-dirty --allow-staged && cargo fmt --all
+```

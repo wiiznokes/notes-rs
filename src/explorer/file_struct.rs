@@ -1,23 +1,30 @@
-#![allow(unused_imports)]
-#![allow(unused_variables)]
 #![allow(dead_code)]
 
+use std::cell::RefCell;
+use std::cmp::Ordering;
 use std::ffi::OsStr;
 use std::path::{Iter, Path, PathBuf};
+use std::rc::Rc;
+use std::sync::Arc;
 
 use ::notify::Event;
 use iced::futures::channel::mpsc::Sender;
 use iced::Command;
+use path_clean::PathClean;
 
-use crate::notify;
-use crate::{fs, map_err_return, map_none_return};
+use crate::app::AppMsg;
+use crate::explorer::notify;
+use crate::{helpers::fs, map_err_return, map_none_return};
+
+use super::binary_search::get_index_sorted;
+use super::notify::NtfMsg;
 
 #[derive(Debug, Clone)]
 pub struct Explorer {
     pub files: Node,
     pub root_path: PathBuf,
 
-    watcher: Option<Sender<notify::NtfMsg>>,
+    pub watcher: Rc<RefCell<Sender<notify::NtfMsg>>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -51,12 +58,6 @@ pub enum XplMsg {
     Delete(PathId),
 
     Expand(PathId),
-}
-
-#[derive(Debug, Clone)]
-pub enum XplImplReqMsg {
-    None,
-    RootHasBeenRemoved,
 }
 
 #[derive(Debug, Clone)]
@@ -142,11 +143,16 @@ impl Node {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum XplResult {
+    RootHasBeenRemoved,
+}
+
 impl Explorer {
     /// Construct a node of type Dir from a path
     ///
     /// Condition: root_path is a dir
-    pub fn new(path: PathBuf) -> Result<Self, String> {
+    pub fn new(path: PathBuf, watcher: Rc<RefCell<Sender<NtfMsg>>>) -> Result<Self, String> {
         if !fs::is_dir_exist(&path).unwrap_or(false) {
             return Err(format!(
                 "path {} is not a directory",
@@ -172,6 +178,11 @@ impl Explorer {
 
         fill_dir_content(&mut content, &path);
 
+        watcher
+            .borrow_mut()
+            .try_send(notify::NtfMsg::Watch(path.clone()))
+            .expect("can't send to watcher");
+
         Ok(Explorer {
             files: Node::Dir(
                 CommonNode {
@@ -186,23 +197,14 @@ impl Explorer {
                 },
             ),
             root_path: path,
-            watcher: None,
+            watcher,
         })
     }
 
-    pub fn handle_message(&mut self, message: XplMsg) -> Result<(), String> {
+    pub fn handle_message(&mut self, message: XplMsg) -> Option<XplResult> {
         match message {
             XplMsg::Watcher(msg) => match msg {
-                notify::NtfMsg::Waiting(mut watcher) => {
-                    println!("received from watcher: Waiting");
-                    watcher
-                        .try_send(notify::NtfMsg::Watch(self.root_path.clone()))
-                        .expect("can't send to watcher");
-
-                    self.watcher = Some(watcher);
-                }
-                notify::NtfMsg::Event(event) => self.handle_event(event),
-
+                notify::NtfMsg::Event(event) => return self.handle_event(event),
                 _ => panic!("{:?}", msg),
             },
             XplMsg::New(_) => {}
@@ -222,10 +224,10 @@ impl Explorer {
             }
         }
 
-        Ok(())
+        None
     }
 
-    fn handle_event(&mut self, event: Event) {
+    fn handle_event(&mut self, event: Event) -> Option<XplResult> {
         match event.kind {
             ::notify::EventKind::Create(create_kind) => match create_kind {
                 ::notify::event::CreateKind::File => {
@@ -256,6 +258,11 @@ impl Explorer {
                     }
                     ::notify::event::RenameMode::From => {
                         let path = &event.paths[0];
+                        if path == &self.root_path {
+                            println!("root path has been removed");
+                            return Some(XplResult::RootHasBeenRemoved);
+                        }
+
                         let (com, dir) =
                             map_err_return!(search_parent_node(&mut self.files, path.clone()));
 
@@ -279,6 +286,12 @@ impl Explorer {
                 match remove_kind {
                     ::notify::event::RemoveKind::File => {
                         let path = &event.paths[0];
+
+                        if path == &self.root_path {
+                            println!("root path has been removed");
+                            return Some(XplResult::RootHasBeenRemoved);
+                        }
+
                         let (com, dir) =
                             map_err_return!(search_parent_node(&mut self.files, path.clone()));
 
@@ -318,6 +331,7 @@ impl Explorer {
 
             _ => {}
         }
+        None
     }
 
     fn expand_dir(&mut self, path_id: PathId) {
@@ -334,11 +348,10 @@ impl Explorer {
             dir.is_expanded = !dir.is_expanded;
             dir.has_been_expanded = true;
 
-            if let Some(ref mut watcher) = self.watcher {
-                watcher
-                    .try_send(notify::NtfMsg::Watch(com.path.clone()))
-                    .expect("error trying to send to watcher");
-            }
+            self.watcher
+                .borrow_mut()
+                .try_send(notify::NtfMsg::Watch(com.path.clone()))
+                .expect("error trying to send to watcher");
         }
     }
 
@@ -459,32 +472,6 @@ fn insert_node_in_vec(content: &mut Vec<Node>, path: &Path, is_dir: bool) -> Res
         Err(index) => content.insert(index, node),
     }
     Ok(())
-}
-
-/// If the value is found then [`Ok`] is returned, containing the index of the matching element.
-/// If the value is not found then [`Err`] is returned,
-/// containing the index where a matching element could be inserted while maintaining sorted order
-///
-/// Sorting follow this rules:
-/// - all directory before files
-/// - alpha numeric (ASCII), with case insensitive (a = A)
-///
-/// Condition: content must be sorted with this rules before using this function
-fn get_index_sorted(name: String, is_dir: bool, content: &[Node]) -> Result<usize, usize> {
-    // notice we use negation when node is a dir
-    // because 0 will have a smaller index than 1
-    //
-    // we lower all letter because 'A' < '_' < 'a' in ASCII, and
-    // I prefer having '.' and '_' files on top
-
-    // we use a third key in case of equality, because Linux is sensitive (a != A)
-    content.binary_search_by_key(&(!is_dir, name.to_lowercase(), name), |n| {
-        (
-            !n.is_dir(),
-            n.common().name.to_lowercase(),
-            n.common().clone().name,
-        )
-    })
 }
 
 /// if a node with the same name is found, return this index, else return [`Err`]
